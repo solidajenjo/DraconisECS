@@ -22,6 +22,12 @@
     <Filter Include="Source Files\app">
       <UniqueIdentifier>{929b7515-a1b9-4c5c-a5bd-bb317c154f3a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\thirdParty">
+      <UniqueIdentifier>{99ee27ca-577b-475e-85e3-0ae2111c2399}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\thirdParty\imgui">
+      <UniqueIdentifier>{4e5fb7be-c3e1-4cee-adf3-17be745332c6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DraconisECS.cpp">
@@ -33,6 +39,30 @@
     <ClCompile Include="app.cpp">
       <Filter>Source Files\app</Filter>
     </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\imgui.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\imgui_demo.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\imgui_draw.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\imgui_tables.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\imgui\backends\imgui_impl_sdl2.cpp">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="core\modules\input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\ecs.h">
@@ -43,6 +73,33 @@
     </ClInclude>
     <ClInclude Include="app.h">
       <Filter>Source Files\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\imconfig.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\imgui.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\imgui_internal.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\imstb_rectpack.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\imstb_textedit.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\imstb_truetype.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\imgui\backends\imgui_impl_sdl2.h">
+      <Filter>Source Files\thirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="core\modules\input.h">
+      <Filter>Source Files\modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

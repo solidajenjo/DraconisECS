@@ -1,5 +1,7 @@
-#include "SDL.h"
-#include <iostream>
+#pragma once
+
+struct SDL_Window;
+struct SDL_Renderer;
 
 namespace module
 {
@@ -7,41 +9,16 @@ namespace module
     {
     public:
  
-        Window(const char* title, int width, int height)
-        {
-            window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
-            if (window == nullptr)
-            {
-                std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
-                exit(1);
-            }
-        }
+		bool init(const char* title, int width, int height);
 
-        ~Window()
-        {
-            SDL_DestroyWindow(window);
-        }
+        void clear();
 
-        void clear()
-        {
-            SDL_RenderClear(renderer);
-        }
+        void present();
 
-        void present()
-        {
-            SDL_RenderPresent(renderer);
-        }
+		void shutdown();
 
-        void setRenderer(SDL_Renderer* renderer)
-        {
-            this->renderer = renderer;
-        }
-
-        SDL_Window* getWindow()
-        {
-            return window;
-        }
-
+		SDL_Window* getWindow() const { return window; }
+        
     private:
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;

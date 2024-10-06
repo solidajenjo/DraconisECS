@@ -1,26 +1,29 @@
 #include "app.h"
-#include "SDL.h"
 #include "modules/window.h"
+#include "modules/input.h"
 
 app::App* app::app = new app::App();
 
 bool app::init()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
-    {
-        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
-        return false;
-    }
+    app->window = new module::Window();
+	app->input = new module::Input();
 
-    app->window = new module::Window("DraconisECS", 800, 600);
-
-    return true;
+    return app->window->init("DraconisECS", 800, 600);
 }
 
 bool app::update()
 {
+	if (app->shouldClose)
+	{
+		return false;
+	}
+
     app->window->clear();
     app->window->present();
+
+	app->input->update();
+
     return true;
 }
 
@@ -28,7 +31,10 @@ bool app::shutdown()
 {
 	delete app->window;
 
-    SDL_Quit();
-
     return true;
+}
+
+void app::quit()
+{
+	app->shouldClose = true;
 }

@@ -3,20 +3,26 @@
 namespace module
 {
 	class Window;
+	class Input;
 }
 
 namespace app
 {
-	class App
+	struct App
 	{
-	public:
-		App() = default;  
-		module::Window* window;
+		App() = default;
+
+		module::Window* window = nullptr;
+		module::Input* input = nullptr;
+
+		bool shouldClose = false;
 	};
 
 	bool init();
 	bool update();
 	bool shutdown();
+
+	void quit();
 
 	extern App* app;
 }
