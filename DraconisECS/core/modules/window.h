@@ -11,9 +11,7 @@ namespace module
  
 		bool init(const char* title, int width, int height);
 
-        void clear();
-
-        void present();
+        void update();
 
 		void shutdown();
 

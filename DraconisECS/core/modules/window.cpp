@@ -63,12 +63,7 @@ bool module::Window::init(const char* title, int width, int height)
     return true;
 }
 
-void module::Window::clear()
-{
-    SDL_RenderClear(renderer);
-}
-
-void module::Window::present()
+void module::Window::update()
 {
     //draw imgui test window
     ImGui_ImplOpenGL3_NewFrame();
@@ -82,15 +77,14 @@ void module::Window::present()
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
-        SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
-        SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+        SDL_Window* backupCurrentWindow = SDL_GL_GetCurrentWindow();
+        SDL_GLContext backupCurrentContext = SDL_GL_GetCurrentContext();
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
-        SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+        SDL_GL_MakeCurrent(backupCurrentWindow, backupCurrentContext);
     }
 
     SDL_GL_SwapWindow(window);
-
 }
 
 void module::Window::shutdown()

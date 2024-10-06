@@ -61,7 +61,10 @@
       <Filter>Source Files\thirdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="core\modules\input.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="core\modules\render.cpp">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -99,6 +102,9 @@
       <Filter>Source Files\thirdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="core\modules\input.h">
+      <Filter>Source Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="core\modules\render.h">
       <Filter>Source Files\modules</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,6 +4,7 @@ namespace module
 {
 	class Window;
 	class Input;
+	class Render;
 }
 
 namespace app
@@ -14,6 +15,7 @@ namespace app
 
 		module::Window* window = nullptr;
 		module::Input* input = nullptr;
+		module::Render* render = nullptr;
 
 		bool shouldClose = false;
 	};
