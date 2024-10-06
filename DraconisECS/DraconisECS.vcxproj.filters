@@ -19,6 +19,9 @@
     <Filter Include="Source Files\modules">
       <UniqueIdentifier>{3b1a256d-538b-4c04-8c04-ba2c2084cb1d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\app">
+      <UniqueIdentifier>{929b7515-a1b9-4c5c-a5bd-bb317c154f3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DraconisECS.cpp">
@@ -27,6 +30,9 @@
     <ClCompile Include="core\modules\window.cpp">
       <Filter>Source Files\modules</Filter>
     </ClCompile>
+    <ClCompile Include="app.cpp">
+      <Filter>Source Files\app</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\ecs.h">
@@ -34,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="core\modules\window.h">
       <Filter>Source Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="app.h">
+      <Filter>Source Files\app</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -135,10 +135,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app.cpp" />
     <ClCompile Include="core\modules\window.cpp" />
     <ClCompile Include="DraconisECS.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="app.h" />
     <ClInclude Include="core\ecs.h" />
     <ClInclude Include="core\modules\window.h" />
   </ItemGroup>
