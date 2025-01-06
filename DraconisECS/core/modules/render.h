@@ -1,14 +1,13 @@
 #pragma once
+#include "Module.h"
 
 namespace module
 {
-	class Render
+	class Render : public module::Module //TODO: SHUTDOWN OPENGL
 	{
 	public:
 		bool init();
-		void preUpdate();
-		void update();
-		void postUpdate();
-		void shutdown();
+		bool preUpdate() override;
+		bool update() override;
 	};
 }

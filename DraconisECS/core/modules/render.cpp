@@ -12,13 +12,14 @@ bool module::Render::init()
     return true;
 }
 
-void module::Render::preUpdate()
+bool module::Render::preUpdate()
 {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+	return true;
 }
 
-void module::Render::update()
+bool module::Render::update()
 {
     GLfloat vertices[] = {
         -0.5f, -0.5f, 0.0f,
@@ -46,8 +47,5 @@ void module::Render::update()
 
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &vao);
-}
-
-void module::Render::shutdown()
-{
+    return true;
 }

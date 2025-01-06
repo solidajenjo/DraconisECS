@@ -1,10 +1,11 @@
 #pragma once
+#include "Module.h"
 
 namespace module
 {
-	class Input
+	class Input : public module::Module
 	{
 	public:
-		void update();
+		bool update() override;
 	};
 } // namespace input

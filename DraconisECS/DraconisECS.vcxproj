@@ -143,10 +143,12 @@
     <ClCompile Include="..\ThirdParty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="core\modules\editor.cpp" />
     <ClCompile Include="core\modules\input.cpp" />
     <ClCompile Include="core\modules\render.cpp" />
     <ClCompile Include="core\modules\window.cpp" />
     <ClCompile Include="DraconisECS.cpp" />
+    <ClCompile Include="Module.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ThirdParty\imgui\backends\imgui_impl_opengl3.h" />
@@ -159,9 +161,11 @@
     <ClInclude Include="..\ThirdParty\imgui\imstb_truetype.h" />
     <ClInclude Include="app.h" />
     <ClInclude Include="core\ecs.h" />
+    <ClInclude Include="core\modules\editor.h" />
     <ClInclude Include="core\modules\input.h" />
     <ClInclude Include="core\modules\render.h" />
     <ClInclude Include="core\modules\window.h" />
+    <ClInclude Include="Module.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -66,6 +66,12 @@
     <ClCompile Include="core\modules\render.cpp">
       <Filter>Source Files\modules</Filter>
     </ClCompile>
+    <ClCompile Include="core\modules\editor.cpp">
+      <Filter>Source Files\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Module.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\ecs.h">
@@ -106,6 +112,12 @@
     </ClInclude>
     <ClInclude Include="core\modules\render.h">
       <Filter>Source Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="core\modules\editor.h">
+      <Filter>Source Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Module.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

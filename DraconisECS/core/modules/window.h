@@ -1,19 +1,20 @@
 #pragma once
+#include "Module.h"
 
 struct SDL_Window;
 struct SDL_Renderer;
 
 namespace module
 {
-    class Window
+	class Window : public module::Module
     {
     public:
  
-		bool init(const char* title, int width, int height);
+		bool init() override;
 
-        void update();
+        bool postUpdate() override;
 
-		void shutdown();
+		bool shutdown() override;
 
 		SDL_Window* getWindow() const { return window; }
         
