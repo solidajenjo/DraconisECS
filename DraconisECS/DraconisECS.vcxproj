@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\ThirdParty\glew-2.2.0\include;$(SolutionDir)\DraconisECS;$(SolutionDir)\ThirdParty\imgui;$(SolutionDir)\ThirdParty\SDL2-2.30.8\include;$(SolutionDir)\DraconisECS\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,7 +123,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\ThirdParty\glew-2.2.0\include;$(SolutionDir)\DraconisECS;$(SolutionDir)\ThirdParty\imgui;$(SolutionDir)\ThirdParty\SDL2-2.30.8\include;$(SolutionDir)\DraconisECS\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,6 +143,7 @@
     <ClCompile Include="..\ThirdParty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="core\editorPanels\renderEP.cpp" />
     <ClCompile Include="core\modules\editor.cpp" />
     <ClCompile Include="core\modules\input.cpp" />
     <ClCompile Include="core\modules\render.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\ThirdParty\imgui\imstb_truetype.h" />
     <ClInclude Include="app.h" />
     <ClInclude Include="core\ecs.h" />
+    <ClInclude Include="core\editorPanels\renderEP.h" />
     <ClInclude Include="core\modules\editor.h" />
     <ClInclude Include="core\modules\input.h" />
     <ClInclude Include="core\modules\render.h" />

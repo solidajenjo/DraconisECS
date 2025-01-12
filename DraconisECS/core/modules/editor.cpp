@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_opengl3.h"
+#include "editorPanels/renderEP.h"
 
 const char* glsl_version = "#version 130"; //TODO: MOVE TO GLOBALS
 
@@ -35,6 +36,9 @@ bool module::Editor::init()
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForOpenGL(window, SDL_GL_GetCurrentContext());
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+	addPanel<editorPanel::RenderEP>();
+
     return true;
 }
 
@@ -45,9 +49,13 @@ bool module::Editor::update()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-    ImGui::Begin("Test Window");
-    ImGui::Text("Hello, world!");
-    ImGui::End();
+
+    //render all editor panels
+	for (const auto& panel : panels)
+	{
+		panel->render();
+	}
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     ImGuiIO& io = ImGui::GetIO();
@@ -59,5 +67,17 @@ bool module::Editor::update()
         ImGui::RenderPlatformWindowsDefault();
         SDL_GL_MakeCurrent(backupCurrentWindow, backupCurrentContext);
     }
+    return true;
+}
+
+bool module::Editor::shutdown()
+{
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+	for (auto& panel : panels)
+	{
+		delete panel;
+	}
     return true;
 }

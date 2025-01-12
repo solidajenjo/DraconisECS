@@ -4,7 +4,7 @@
 #include "modules/render.h"
 #include "modules/editor.h"
 
-app::App< //keep up to date .h declaration
+app::App< //keep up to date with .h declaration
 	module::Window, 
 	module::Input, 
 	module::Render, 

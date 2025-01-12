@@ -28,6 +28,9 @@
     <Filter Include="Source Files\thirdParty\imgui">
       <UniqueIdentifier>{4e5fb7be-c3e1-4cee-adf3-17be745332c6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\editorPanels">
+      <UniqueIdentifier>{4a5deba5-29a4-49cd-bfb9-9b7441f3d1ca}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DraconisECS.cpp">
@@ -71,6 +74,9 @@
     </ClCompile>
     <ClCompile Include="Module.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\editorPanels\renderEP.cpp">
+      <Filter>Source Files\editorPanels</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="Module.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\editorPanels\renderEP.h">
+      <Filter>Source Files\editorPanels</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
