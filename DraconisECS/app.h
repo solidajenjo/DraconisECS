@@ -6,6 +6,12 @@
 #include "modules/Render.h"
 #include "modules/Editor.h"
 
+#define MODULES \
+    module::Window,\
+    module::Input, \
+    module::Render,\
+    module::Editor
+
 namespace app
 {
     template <typename... Modules>
@@ -61,10 +67,5 @@ namespace app
         }
 	};
 
-    extern App< //Keep up to date cpp defintion
-        module::Window, 
-        module::Input, 
-        module::Render, 
-		module::Editor
-    > appInstance;
+    extern App<MODULES> appInstance;
 } // namespace app

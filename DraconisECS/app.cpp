@@ -4,11 +4,6 @@
 #include "modules/render.h"
 #include "modules/editor.h"
 
-app::App< //keep up to date with .h declaration
-	module::Window, 
-	module::Input, 
-	module::Render, 
-	module::Editor
-> app::appInstance;
+app::App<MODULES> app::appInstance;
 
 
