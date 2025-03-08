@@ -1,15 +1,18 @@
 #pragma once
+
 #include "core/modules/editor.h"
+#include <memory>
 
 namespace module::editor
 {
-class RenderPanel : public EditorPanel
+
+class StylePanel : public EditorPanel
 {
   public:
+    StylePanel();
+    virtual ~StylePanel();
+    const char *getName() const override;
     void render() override;
-    const char *getName() const override
-    {
-        return "Render";
-    }
 };
+
 } // namespace module::editor

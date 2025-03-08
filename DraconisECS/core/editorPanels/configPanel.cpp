@@ -140,14 +140,6 @@ void ConfigPanel::renderGraphicsConfig()
         changed = true;
     }
 
-    // Debug Output
-    bool debug = graphicsConfig.enableDebugOutput;
-    if (ImGui::Checkbox("Debug Output", &debug))
-    {
-        graphicsConfig.enableDebugOutput = debug;
-        changed = true;
-    }
-
     if (changed)
     {
         config.setGraphicsConfig(graphicsConfig);

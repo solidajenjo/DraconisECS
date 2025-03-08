@@ -36,7 +36,7 @@ bool Config::loadFromFile(const std::string &filename)
 
     std::cout << "Read JSON content: " << jsonStr << std::endl;
 
-    json j = json::parse(jsonStr, nullptr, false);
+    auto j = json::parse(jsonStr, nullptr, false);
     if (j.is_discarded())
     {
         std::cerr << "Failed to parse config file: " << filename << std::endl;
@@ -47,21 +47,28 @@ bool Config::loadFromFile(const std::string &filename)
     if (j.contains("window"))
     {
         const auto &window = j["window"];
-        windowConfig.title = window.value("title", windowConfig.title);
-        windowConfig.width = window.value("width", windowConfig.width);
-        windowConfig.height = window.value("height", windowConfig.height);
-        windowConfig.fullscreen = window.value("fullscreen", windowConfig.fullscreen);
-        windowConfig.vsync = window.value("vsync", windowConfig.vsync);
+        if (window.contains("title"))
+            windowConfig.title = window["title"].get<std::string>();
+        if (window.contains("width"))
+            windowConfig.width = window["width"].get<int>();
+        if (window.contains("height"))
+            windowConfig.height = window["height"].get<int>();
+        if (window.contains("fullscreen"))
+            windowConfig.fullscreen = window["fullscreen"].get<bool>();
+        if (window.contains("vsync"))
+            windowConfig.vsync = window["vsync"].get<bool>();
     }
 
     // Load graphics config
     if (j.contains("graphics"))
     {
         const auto &graphics = j["graphics"];
-        graphicsConfig.glMajorVersion = graphics.value("glMajorVersion", graphicsConfig.glMajorVersion);
-        graphicsConfig.glMinorVersion = graphics.value("glMinorVersion", graphicsConfig.glMinorVersion);
-        graphicsConfig.msaaSamples = graphics.value("msaaSamples", graphicsConfig.msaaSamples);
-        graphicsConfig.enableDebugOutput = graphics.value("enableDebugOutput", graphicsConfig.enableDebugOutput);
+        if (graphics.contains("glMajorVersion"))
+            graphicsConfig.glMajorVersion = graphics["glMajorVersion"].get<int>();
+        if (graphics.contains("glMinorVersion"))
+            graphicsConfig.glMinorVersion = graphics["glMinorVersion"].get<int>();
+        if (graphics.contains("msaaSamples"))
+            graphicsConfig.msaaSamples = graphics["msaaSamples"].get<int>();
     }
 
     std::cout << "Successfully loaded config from: " << filename << std::endl;
@@ -96,8 +103,7 @@ bool Config::saveToFile(const std::string &filename) const
     // Save graphics config
     j["graphics"] = {{"glMajorVersion", graphicsConfig.glMajorVersion},
                      {"glMinorVersion", graphicsConfig.glMinorVersion},
-                     {"msaaSamples", graphicsConfig.msaaSamples},
-                     {"enableDebugOutput", graphicsConfig.enableDebugOutput}};
+                     {"msaaSamples", graphicsConfig.msaaSamples}};
 
     std::string jsonStr = j.dump(4); // Pretty print with 4 spaces indentation
     std::cout << "Generated JSON content: " << jsonStr << std::endl;
