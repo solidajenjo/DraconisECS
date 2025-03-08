@@ -24,11 +24,20 @@ if not exist "build\bin\%CONFIG%\glew32.dll" (
     copy "build\bin\Release\glew32.dll" "build\bin\%CONFIG%\glew32.dll"
 )
 
-start "" "build\bin\%CONFIG%\DraconisECS.exe"
+echo Running %CONFIG% build...
+cd "build\bin\%CONFIG%"
+DraconisECS.exe 2> error.txt
+if errorlevel 1 (
+    echo Application crashed! Error output:
+    type error.txt
+    cd ..\..\..
+    goto error
+)
+cd ..\..\..
 goto end
 
 :error
-echo Build failed!
+echo Build or run failed!
 pause
 exit /b 1
 
