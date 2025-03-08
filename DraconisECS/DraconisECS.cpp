@@ -2,16 +2,17 @@
 #include "app.h"
 #include <iostream>
 
-int main() 
+int main()
 {
-    if (!app::appInstance.init()) {
+    if (!app::appInstance.init())
+    {
         std::cerr << "Failed to initialize app\n";
         return 1;
     }
 
     // Main loop
-    while (app::appInstance.update()) {
-        std::cout << "App running...\n";
+    while (app::appInstance.update())
+    {
     }
 
     // Shutdown the app

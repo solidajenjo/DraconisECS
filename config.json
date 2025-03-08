@@ -1,0 +1,15 @@
+{
+    "window": {
+        "title": "DraconisECS",
+        "width": 1280,
+        "height": 720,
+        "fullscreen": false,
+        "vsync": true
+    },
+    "graphics": {
+        "glMajorVersion": 3,
+        "glMinorVersion": 0,
+        "msaaSamples": 4,
+        "enableDebugOutput": true
+    }
+}
