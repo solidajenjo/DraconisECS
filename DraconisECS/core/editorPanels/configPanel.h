@@ -8,6 +8,10 @@ class ConfigPanel : public EditorPanel
 {
   public:
     void render() override;
+    const char *getName() const override
+    {
+        return "Configuration";
+    }
 
   private:
     void renderWindowConfig();

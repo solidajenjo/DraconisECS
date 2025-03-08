@@ -9,7 +9,6 @@
     "graphics": {
         "glMajorVersion": 3,
         "glMinorVersion": 0,
-        "msaaSamples": 4,
-        "enableDebugOutput": true
+        "msaaSamples": 4
     }
 }

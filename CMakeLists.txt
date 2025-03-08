@@ -9,8 +9,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Disable exceptions
 if(MSVC)
     add_compile_options(/EHsc- /D_HAS_EXCEPTIONS=0)
+    add_definitions(-D_HAS_EXCEPTIONS=0)
 else()
     add_compile_options(-fno-exceptions)
+    add_definitions(-DBOOST_NO_EXCEPTIONS)
 endif()
 
 # Set paths for third-party libraries

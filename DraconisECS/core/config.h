@@ -6,8 +6,8 @@ namespace core
 struct WindowConfig
 {
     std::string title = "DraconisECS";
-    int width = 800;
-    int height = 600;
+    int width = 1280;
+    int height = 720;
     bool fullscreen = false;
     bool vsync = true;
 };
@@ -16,8 +16,7 @@ struct GraphicsConfig
 {
     int glMajorVersion = 3;
     int glMinorVersion = 0;
-    int msaaSamples = 0;
-    bool enableDebugOutput = true;
+    int msaaSamples = 4;
 };
 
 class Config
