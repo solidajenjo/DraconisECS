@@ -3,6 +3,7 @@
 
 struct SDL_Window;
 struct SDL_Renderer;
+typedef void* SDL_GLContext;
 
 namespace module
 {
@@ -21,5 +22,6 @@ namespace module
     private:
         SDL_Window* window = nullptr;
         SDL_Renderer* renderer = nullptr;
+        SDL_GLContext glContext = nullptr;
     };
 } // namespace window

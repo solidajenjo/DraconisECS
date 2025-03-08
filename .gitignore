@@ -31,6 +31,60 @@
 *.out
 *.app
 
+# CMake
 build/
-.vs/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.dir/
+Win32/
 x64/
+Debug/
+Release/
+*.cmake
+!CMakeLists.txt
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.user
+*.userosscache
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+ipch/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+cmake-build-*/
+*.iml
+*.iws
+*.ipr
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project-specific
+WorkingDirectory/
+
+# Dear ImGui
+imgui.ini

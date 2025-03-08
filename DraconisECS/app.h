@@ -1,10 +1,10 @@
 #pragma once
 #include <tuple>
 #include "Module.h"
-#include "modules/Window.h"
-#include "modules/Input.h"
-#include "modules/Render.h"
-#include "modules/Editor.h"
+#include "core/modules/window.h"
+#include "core/modules/input.h"
+#include "core/modules/render.h"
+#include "core/modules/editor.h"
 
 #define MODULES \
     module::Window,\

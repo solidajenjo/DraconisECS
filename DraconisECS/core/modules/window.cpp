@@ -1,5 +1,6 @@
 #include "window.h"
 #include "SDL.h"
+#include <GL/glew.h>
 #include <iostream>
 #include "imgui.h"
 #include "backends/imgui_impl_sdl2.h"
@@ -35,9 +36,35 @@ bool module::Window::init()
         return false;
     }
 
-    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+    glContext = SDL_GL_CreateContext(window);
+    if (glContext == nullptr)
+    {
+        std::cerr << "Failed to create OpenGL context: " << SDL_GetError() << std::endl;
+        return false;
+    }
     SDL_GL_MakeCurrent(window, glContext);
     SDL_GL_SetSwapInterval(1); // Enable vsync
+
+    // Initialize GLEW
+    GLenum err = glewInit();
+    if (err != GLEW_OK)
+    {
+        std::cerr << "Failed to initialize GLEW: " << glewGetErrorString(err) << std::endl;
+        return false;
+    }
+
+    // Initialize Dear ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+    ImGui_ImplOpenGL3_Init("#version 130");
 
     return true;
 }
@@ -50,7 +77,12 @@ bool module::Window::postUpdate()
 
 bool module::Window::shutdown()
 {
-    SDL_Quit();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);
+    SDL_Quit();
     return true;
 }
