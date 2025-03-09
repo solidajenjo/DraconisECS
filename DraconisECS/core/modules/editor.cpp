@@ -3,6 +3,7 @@
 #include "core/editorPanels/configPanel.h"
 #include "core/editorPanels/renderPanel.h"
 #include "core/editorPanels/stylePanel.h"
+#include "filesystem.h"
 #include "window.h"
 #include <SDL.h>
 #include <fstream>
@@ -198,35 +199,13 @@ bool Editor::saveLayout(const std::string &filename) const
         {"rounding", currentTheme.rounding},
         {"borderSize", currentTheme.borderSize}};
 
-    std::ofstream file(filename);
-    if (!file.is_open())
-    {
-        return false;
-    }
-
-    file << j.dump(4);
-    file.close();
-    return true;
+    return Filesystem::writeJsonFile(filename, j);
 }
 
 bool Editor::loadLayout(const std::string &filename)
 {
-    std::ifstream file(filename);
-    if (!file.is_open())
-    {
-        return false;
-    }
-
-    std::string jsonStr((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
-
-    if (jsonStr.empty())
-    {
-        return false;
-    }
-
-    auto j = json::parse(jsonStr, nullptr, false);
-    if (j.is_discarded())
+    json j;
+    if (!Filesystem::readJsonFile(filename, j))
     {
         return false;
     }
@@ -252,7 +231,7 @@ bool Editor::loadLayout(const std::string &filename)
                     state.size = ImVec2(panel["size"][0].get<float>(), panel["size"][1].get<float>());
                 }
                 if (panel.contains("dockId"))
-                    state.dockId = panel["dockId"].get<std::string>();
+                    state.dockId = panel["dockId"].get<ImGuiID>();
             }
         }
     }

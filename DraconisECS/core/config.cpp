@@ -1,6 +1,5 @@
 #include "Config.h"
-#include <filesystem>
-#include <fstream>
+#include "modules/filesystem.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 
@@ -12,34 +11,16 @@ bool Config::loadFromFile(const std::string &filename)
 {
     std::cout << "Loading config from: " << filename << std::endl;
 
-    if (!std::filesystem::exists(filename))
+    if (!module::Filesystem::exists(filename))
     {
         std::cerr << "Config file does not exist: " << filename << std::endl;
         return false;
     }
 
-    std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open())
+    json j;
+    if (!module::Filesystem::readJsonFile(filename, j))
     {
-        std::cerr << "Failed to open config file: " << filename << std::endl;
-        return false;
-    }
-
-    std::string jsonStr((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
-
-    if (jsonStr.empty())
-    {
-        std::cerr << "Config file is empty: " << filename << std::endl;
-        return false;
-    }
-
-    std::cout << "Read JSON content: " << jsonStr << std::endl;
-
-    auto j = json::parse(jsonStr, nullptr, false);
-    if (j.is_discarded())
-    {
-        std::cerr << "Failed to parse config file: " << filename << std::endl;
+        std::cerr << "Failed to read or parse config file: " << filename << std::endl;
         return false;
     }
 
@@ -79,18 +60,6 @@ bool Config::saveToFile(const std::string &filename) const
 {
     std::cout << "Saving config to: " << filename << std::endl;
 
-    // Create parent directory if it doesn't exist
-    std::filesystem::path filePath(filename);
-    if (!std::filesystem::exists(filePath.parent_path()))
-    {
-        std::cout << "Creating directory: " << filePath.parent_path() << std::endl;
-        if (!std::filesystem::create_directories(filePath.parent_path()))
-        {
-            std::cerr << "Failed to create directory: " << filePath.parent_path() << std::endl;
-            return false;
-        }
-    }
-
     json j;
 
     // Save window config
@@ -105,20 +74,7 @@ bool Config::saveToFile(const std::string &filename) const
                      {"glMinorVersion", graphicsConfig.glMinorVersion},
                      {"msaaSamples", graphicsConfig.msaaSamples}};
 
-    std::string jsonStr = j.dump(4); // Pretty print with 4 spaces indentation
-    std::cout << "Generated JSON content: " << jsonStr << std::endl;
-
-    std::ofstream file(filename, std::ios::binary);
-    if (!file.is_open())
-    {
-        std::cerr << "Failed to open config file for writing: " << filename << std::endl;
-        return false;
-    }
-
-    file.write(jsonStr.c_str(), jsonStr.size());
-    file.close();
-
-    if (file.fail())
+    if (!module::Filesystem::writeJsonFile(filename, j))
     {
         std::cerr << "Failed to write config file: " << filename << std::endl;
         return false;
