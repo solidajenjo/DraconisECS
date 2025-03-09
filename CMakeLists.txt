@@ -21,6 +21,14 @@ set(GLEW_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glew-2.2.0")
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/imgui")
 set(JSON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/json")
 
+# Configure SDL2 build options
+set(SDL_SHARED ON CACHE BOOL "Build SDL2 as a shared library")
+set(SDL_STATIC OFF CACHE BOOL "Build SDL2 as a static library")
+set(SDL_TEST OFF CACHE BOOL "Build SDL2 tests")
+
+# Add SDL2 as a subdirectory project
+add_subdirectory("${SDL2_DIR}" "SDL2_build" EXCLUDE_FROM_ALL)
+
 # Create nlohmann directory and download JSON library if not exists
 file(MAKE_DIRECTORY "${JSON_DIR}/nlohmann")
 if(NOT EXISTS "${JSON_DIR}/nlohmann/json.hpp")
@@ -68,26 +76,27 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # Link directories
 target_link_directories(${PROJECT_NAME} PRIVATE
-    ${SDL2_DIR}/build/Release
     ${GLEW_DIR}/lib/Release/x64
 )
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    SDL2
-    SDL2main
+    SDL2::SDL2
+    SDL2::SDL2main
     glew32
     opengl32
 )
 
-# Copy SDL2 and GLEW DLLs to output directory
+# Copy DLLs to output directory for both Debug and Release configurations
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    # Copy SDL2 DLL for Debug
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${SDL2_DIR}/build/Release/SDL2.dll"
-        "${CMAKE_BINARY_DIR}/bin/Release/SDL2.dll"
+        "$<TARGET_FILE:SDL2::SDL2>"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2.dll"
+    # Copy GLEW DLL for both configurations
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${GLEW_DIR}/bin/Release/x64/glew32.dll"
-        "${CMAKE_BINARY_DIR}/bin/Release/glew32.dll"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/glew32.dll"
 )
 
 # Copy config.json to output directory only if it doesn't exist
