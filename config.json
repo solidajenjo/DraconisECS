@@ -7,8 +7,8 @@
         "vsync": true
     },
     "graphics": {
-        "glMajorVersion": 3,
-        "glMinorVersion": 0,
+        "glMajorVersion": 4,
+        "glMinorVersion": 3,
         "msaaSamples": 4
     }
 }
