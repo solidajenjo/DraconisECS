@@ -89,14 +89,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Copy DLLs to output directory for both Debug and Release configurations
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    # Copy SDL2 DLL for Debug
+    # Copy SDL2 DLL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "$<TARGET_FILE:SDL2::SDL2>"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2.dll"
-    # Copy GLEW DLL for both configurations
+    # Copy GLEW DLL - always use release version since we don't have debug
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${GLEW_DIR}/bin/Release/x64/glew32.dll"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/glew32.dll"
+    COMMAND ${CMAKE_COMMAND} -E echo "Copying DLLs to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    COMMAND ${CMAKE_COMMAND} -E echo "SDL2 DLL from: $<TARGET_FILE:SDL2::SDL2>"
 )
 
 # Copy config.json to output directory only if it doesn't exist
