@@ -10,10 +10,21 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MSVC)
     add_compile_options(/EHsc- /D_HAS_EXCEPTIONS=0)
     add_definitions(-D_HAS_EXCEPTIONS=0)
+    
+    # Add debug info in Debug mode
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /Od /DEBUG")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG")
+    
+    # Use debug runtime library in Debug mode
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
 else()
     add_compile_options(-fno-exceptions)
     add_definitions(-DBOOST_NO_EXCEPTIONS)
 endif()
+
+# Add debug symbols
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 
 # Set paths for third-party libraries
 set(SDL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/SDL2-2.30.8")
@@ -89,16 +100,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Copy DLLs to output directory for both Debug and Release configurations
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    # Copy SDL2 DLL
+    # Copy SDL2 DLL - use debug or release version based on configuration
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:SDL2::SDL2>"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2.dll"
+        "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/SDL2_build/Debug/SDL2d.dll,${CMAKE_BINARY_DIR}/SDL2_build/Release/SDL2.dll>"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/$<IF:$<CONFIG:Debug>,SDL2d.dll,SDL2.dll>"
     # Copy GLEW DLL - always use release version since we don't have debug
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${GLEW_DIR}/bin/Release/x64/glew32.dll"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/glew32.dll"
     COMMAND ${CMAKE_COMMAND} -E echo "Copying DLLs to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    COMMAND ${CMAKE_COMMAND} -E echo "SDL2 DLL from: $<TARGET_FILE:SDL2::SDL2>"
+    COMMAND ${CMAKE_COMMAND} -E echo "SDL2 DLL from: $<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/SDL2_build/Debug/SDL2d.dll,${CMAKE_BINARY_DIR}/SDL2_build/Release/SDL2.dll>"
 )
 
 # Copy config.json to output directory only if it doesn't exist
