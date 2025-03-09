@@ -33,7 +33,7 @@ struct PanelState
     bool isDocked = false;
     ImVec2 position{0, 0};
     ImVec2 size{0, 0};
-    std::string dockId;
+    ImGuiID dockId = 0;
 };
 
 struct EditorTheme
@@ -76,14 +76,24 @@ class Editor : public Module
         panelStates[name] = editor::PanelState{};
     }
 
+    // New method for panels with dependencies
+    template <typename Panel, typename... Args> void addPanel(Args &&...args)
+    {
+        static_assert(std::is_base_of_v<editor::EditorPanel, Panel>, "Panel must inherit from EditorPanel");
+        auto panel = std::make_unique<Panel>(std::forward<Args>(args)...);
+        const char *name = panel->getName();
+        panels[name] = std::move(panel);
+        panelStates[name] = editor::PanelState{};
+    }
+
     bool removePanel(const std::string &panelName);
     bool showPanel(const std::string &panelName, bool show);
     bool isPanelVisible(const std::string &panelName) const;
     std::vector<std::string> getActivePanels() const;
 
     // Layout Management
-    bool saveLayout(const std::string &filename) const;
-    bool loadLayout(const std::string &filename);
+    bool saveLayout(const std::string &filename = "") const;
+    bool loadLayout(const std::string &filename = "");
     void resetLayout();
 
     // Theme Management

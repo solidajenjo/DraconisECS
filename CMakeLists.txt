@@ -128,6 +128,22 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     -P "${CMAKE_BINARY_DIR}/copy_config_if_not_exists.cmake"
 )
 
+# Copy layout.json to output directory only if it doesn't exist
+file(WRITE "${CMAKE_BINARY_DIR}/copy_layout_if_not_exists.cmake"
+    "if(NOT EXISTS \"\${DST}\")\n"
+    "    file(COPY \"\${SRC}\" DESTINATION \"\${DIR}\")\n"
+    "    message(STATUS \"Copying layout.json to output directory (file did not exist)\")\n"
+    "endif()\n"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} 
+    -DSRC="${CMAKE_SOURCE_DIR}/layout.json"
+    -DDIR="$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    -DDST="$<TARGET_FILE_DIR:${PROJECT_NAME}>/layout.json"
+    -P "${CMAKE_BINARY_DIR}/copy_layout_if_not_exists.cmake"
+)
+
 # Set output directories
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

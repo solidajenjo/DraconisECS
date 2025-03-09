@@ -10,6 +10,7 @@
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl2.h>
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -37,17 +38,20 @@ bool Editor::init()
     setDefaultTheme();
 
     // Add default menu items
-    addMenuItem("File", "Save Layout", [this]() { saveLayout("layout.json"); });
-    addMenuItem("File", "Load Layout", [this]() { loadLayout("layout.json"); });
+    addMenuItem("File", "Save Layout", [this]() { saveLayout(); });
+    addMenuItem("File", "Load Layout", [this]() { loadLayout(); });
     addMenuItem("File", "Reset Layout", [this]() { resetLayout(); });
 
     // Add editor panels
     addPanel<editor::ConfigPanel>();
-    addPanel<editor::RenderPanel>();
     addPanel<editor::StylePanel>();
 
+    // Add render panel with render module dependency
+    Render &renderModule = app::appInstance.getModule<Render>();
+    addPanel<editor::RenderPanel>(&renderModule);
+
     // Try to load saved layout
-    if (!loadLayout("layout.json"))
+    if (!loadLayout())
     {
         // If loading fails, we already have the default theme from setDefaultTheme()
         return true;
@@ -158,16 +162,29 @@ std::vector<std::string> Editor::getActivePanels() const
 
 bool Editor::saveLayout(const std::string &filename) const
 {
+    // Get the executable path
+    char *basePath = SDL_GetBasePath();
+    if (!basePath)
+    {
+        std::cerr << "Failed to get base path: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    std::filesystem::path layoutPath = std::filesystem::path(basePath) / (filename.empty() ? "layout.json" : filename);
+    SDL_free(basePath);
+
     json j;
 
     // Save panel states
     for (const auto &[name, state] : panelStates)
     {
-        j["panels"][name] = {{"visible", state.isVisible},
-                             {"docked", state.isDocked},
-                             {"position", {state.position.x, state.position.y}},
-                             {"size", {state.size.x, state.size.y}},
-                             {"dockId", state.dockId}};
+        j["panels"][name] = {
+            {"visible", state.isVisible},
+            {"docked", state.isDocked},
+            {"position", {state.position.x, state.position.y}},
+            {"size", {state.size.x, state.size.y}},
+            {"dockId", static_cast<uint32_t>(state.dockId)} // Save as uint32_t
+        };
     }
 
     // Save complete theme
@@ -199,13 +216,24 @@ bool Editor::saveLayout(const std::string &filename) const
         {"rounding", currentTheme.rounding},
         {"borderSize", currentTheme.borderSize}};
 
-    return Filesystem::writeJsonFile(filename, j);
+    return Filesystem::writeJsonFile(layoutPath.string(), j);
 }
 
 bool Editor::loadLayout(const std::string &filename)
 {
+    // Get the executable path
+    char *basePath = SDL_GetBasePath();
+    if (!basePath)
+    {
+        std::cerr << "Failed to get base path: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    std::filesystem::path layoutPath = std::filesystem::path(basePath) / (filename.empty() ? "layout.json" : filename);
+    SDL_free(basePath);
+
     json j;
-    if (!Filesystem::readJsonFile(filename, j))
+    if (!Filesystem::readJsonFile(layoutPath.string(), j))
     {
         return false;
     }
@@ -231,7 +259,10 @@ bool Editor::loadLayout(const std::string &filename)
                     state.size = ImVec2(panel["size"][0].get<float>(), panel["size"][1].get<float>());
                 }
                 if (panel.contains("dockId"))
-                    state.dockId = panel["dockId"].get<ImGuiID>();
+                {
+                    // Load as uint32_t and cast to ImGuiID
+                    state.dockId = static_cast<ImGuiID>(panel["dockId"].get<uint32_t>());
+                }
             }
         }
     }
