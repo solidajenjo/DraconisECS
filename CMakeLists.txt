@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Disable exceptions
+# Disable exceptions and set debug flags based on compiler
 if(MSVC)
-    add_compile_options(/EHsc- /D_HAS_EXCEPTIONS=0)
+    # Disable all exception handling consistently
+    string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    add_compile_options(/EHs-c-)
     add_definitions(-D_HAS_EXCEPTIONS=0)
     
     # Add debug info in Debug mode
@@ -20,11 +22,13 @@ if(MSVC)
 else()
     add_compile_options(-fno-exceptions)
     add_definitions(-DBOOST_NO_EXCEPTIONS)
+    
+    # Add debug symbols for non-MSVC compilers
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 endif()
 
-# Add debug symbols
+# Set build type
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 
 # Set paths for third-party libraries
 set(SDL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/SDL2-2.30.8")
@@ -36,6 +40,11 @@ set(JSON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/json")
 set(SDL_SHARED ON CACHE BOOL "Build SDL2 as a shared library")
 set(SDL_STATIC OFF CACHE BOOL "Build SDL2 as a static library")
 set(SDL_TEST OFF CACHE BOOL "Build SDL2 tests")
+
+# Set SDL2 output directories to match our project structure
+set(SDL_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/SDL2_build" CACHE PATH "Where to place SDL2 DLLs")
+set(SDL_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/SDL2_build" CACHE PATH "Where to place SDL2 libraries")
+set(SDL_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/SDL2_build" CACHE PATH "Where to place SDL2 archives")
 
 # Add SDL2 as a subdirectory project
 add_subdirectory("${SDL2_DIR}" "SDL2_build" EXCLUDE_FROM_ALL)
@@ -98,57 +107,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     opengl32
 )
 
-# Copy DLLs to output directory for both Debug and Release configurations
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    # Copy SDL2 DLL - use debug or release version based on configuration
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/SDL2_build/Debug/SDL2d.dll,${CMAKE_BINARY_DIR}/SDL2_build/Release/SDL2.dll>"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/$<IF:$<CONFIG:Debug>,SDL2d.dll,SDL2.dll>"
-    # Copy GLEW DLL - always use release version since we don't have debug
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${GLEW_DIR}/bin/Release/x64/glew32.dll"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/glew32.dll"
-    COMMAND ${CMAKE_COMMAND} -E echo "Copying DLLs to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    COMMAND ${CMAKE_COMMAND} -E echo "SDL2 DLL from: $<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/SDL2_build/Debug/SDL2d.dll,${CMAKE_BINARY_DIR}/SDL2_build/Release/SDL2.dll>"
-)
-
-# Copy config.json to output directory only if it doesn't exist
-file(WRITE "${CMAKE_BINARY_DIR}/copy_config_if_not_exists.cmake"
-    "if(NOT EXISTS \"\${DST}\")\n"
-    "    file(COPY \"\${SRC}\" DESTINATION \"\${DIR}\")\n"
-    "    message(STATUS \"Copying config.json to output directory (file did not exist)\")\n"
-    "endif()\n"
-)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} 
-    -DSRC="${CMAKE_SOURCE_DIR}/config.json"
-    -DDIR="$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    -DDST="$<TARGET_FILE_DIR:${PROJECT_NAME}>/config.json"
-    -P "${CMAKE_BINARY_DIR}/copy_config_if_not_exists.cmake"
-)
-
-# Copy layout.json to output directory only if it doesn't exist
-file(WRITE "${CMAKE_BINARY_DIR}/copy_layout_if_not_exists.cmake"
-    "if(NOT EXISTS \"\${DST}\")\n"
-    "    file(COPY \"\${SRC}\" DESTINATION \"\${DIR}\")\n"
-    "    message(STATUS \"Copying layout.json to output directory (file did not exist)\")\n"
-    "endif()\n"
-)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} 
-    -DSRC="${CMAKE_SOURCE_DIR}/layout.json"
-    -DDIR="$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    -DDST="$<TARGET_FILE_DIR:${PROJECT_NAME}>/layout.json"
-    -P "${CMAKE_BINARY_DIR}/copy_layout_if_not_exists.cmake"
-)
-
 # Set output directories
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/$<CONFIG>"
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/$<CONFIG>"
 )
 
 # Add compile options based on compiler
