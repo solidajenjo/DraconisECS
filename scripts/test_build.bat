@@ -46,11 +46,26 @@ if "%CI_BUILD%"=="1" (
     goto :skip_run_tests
 )
 
+:: Ensure no existing instances are running
+call :terminate_process "DraconisECS.exe"
+timeout /t 2 /nobreak > nul
+
 :: Test run script with debug
-call :run_test_with_timeout "Run debug build" "%SCRIPT_DIR%run.bat debug" "DraconisECS.exe" 5
+call :run_test_with_timeout "Run debug build" "%SCRIPT_DIR%run.bat debug" "DraconisECS.exe" 10
+
+:: Ensure cleanup between tests
+call :terminate_process "DraconisECS.exe"
+timeout /t 2 /nobreak > nul
+
+:: Rebuild release to ensure it's fresh
+call :run_test "Rebuild release" "call %SCRIPT_DIR%build.bat release"
+timeout /t 2 /nobreak > nul
 
 :: Test run script with release
-call :run_test_with_timeout "Run release build" "%SCRIPT_DIR%run.bat release" "DraconisECS.exe" 5
+call :run_test_with_timeout "Run release build" "%SCRIPT_DIR%run.bat release" "DraconisECS.exe" 15
+
+:: Final cleanup
+call :terminate_process "DraconisECS.exe"
 
 :skip_run_tests
 
@@ -92,7 +107,69 @@ echo.
 endlocal & set TOTAL_TESTS=%TOTAL_TESTS% & set FAILED_TESTS=%FAILED_TESTS%
 exit /b
 
-:: Test runner function with timeout
+:: Enhanced process termination function with multiple attempts
+:terminate_process
+setlocal
+set "PROCESS_NAME=%~1"
+set "MAX_ATTEMPTS=3"
+set "CURRENT_ATTEMPT=1"
+
+echo Attempting to terminate %PROCESS_NAME%...
+
+:terminate_loop
+tasklist /FI "IMAGENAME eq %PROCESS_NAME%" 2>NUL | find /I /N "%PROCESS_NAME%" >NUL
+if %ERRORLEVEL% neq 0 (
+    echo Process %PROCESS_NAME% is not running.
+    goto :terminate_success
+)
+
+echo Attempt %CURRENT_ATTEMPT% of %MAX_ATTEMPTS%...
+
+:: Get all PIDs for the process
+for /f "tokens=2" %%a in ('tasklist /fi "imagename eq %PROCESS_NAME%" /fo list ^| find "PID:"') do (
+    echo Found %PROCESS_NAME% with PID: %%a
+    
+    :: Try graceful termination first
+    echo Attempting graceful termination of PID %%a...
+    taskkill /PID %%a >nul 2>&1
+    
+    :: Wait briefly
+    timeout /t 1 /nobreak > nul
+    
+    :: Check if process still exists
+    tasklist /FI "PID eq %%a" 2>NUL | find /I /N "%%a" >NUL
+    if !ERRORLEVEL! equ 0 (
+        :: Force termination if graceful attempt failed
+        echo Forcing termination of PID %%a...
+        taskkill /F /T /PID %%a >nul 2>&1
+    )
+)
+
+:: Wait and verify
+timeout /t 2 /nobreak > nul
+
+:: Check if process is still running
+tasklist /FI "IMAGENAME eq %PROCESS_NAME%" 2>NUL | find /I /N "%PROCESS_NAME%" >NUL
+if %ERRORLEVEL% equ 0 (
+    set /a CURRENT_ATTEMPT+=1
+    if %CURRENT_ATTEMPT% leq %MAX_ATTEMPTS% (
+        goto :terminate_loop
+    ) else (
+        echo Failed to terminate %PROCESS_NAME% after %MAX_ATTEMPTS% attempts.
+        exit /b 1
+    )
+) else (
+    goto :terminate_success
+)
+
+:terminate_success
+echo Successfully terminated %PROCESS_NAME%
+exit /b 0
+
+endlocal
+exit /b
+
+:: Test runner function with timeout and enhanced process management
 :run_test_with_timeout
 setlocal
 set "TEST_NAME=%~1"
@@ -107,29 +184,32 @@ echo Command: %TEST_CMD%
 :: Start the process in the background
 start "" cmd /c %TEST_CMD%
 
-:: Wait for the process to start (give it a moment)
-timeout /t 2 /nobreak > nul
-
-:: Check if the process is running
+:: Wait for the process to start (up to 10 seconds)
+echo Waiting for process to start...
+set /a "WAIT_TIME=10"
+:wait_loop
 tasklist /FI "IMAGENAME eq %PROCESS_NAME%" 2>NUL | find /I /N "%PROCESS_NAME%" >NUL
 if %ERRORLEVEL% neq 0 (
-    echo [FAILED] %TEST_NAME% - Process failed to start
+    timeout /t 1 /nobreak > nul
+    set /a "WAIT_TIME-=1"
+    if %WAIT_TIME% gtr 0 goto :wait_loop
+    echo [FAILED] %TEST_NAME% - Process failed to start within 10 seconds
     set /a FAILED_TESTS+=1
     goto :test_with_timeout_end
 )
 
-:: Wait for the specified time
+:: Get the PID of the started process
+for /f "tokens=2" %%a in ('tasklist /fi "imagename eq %PROCESS_NAME%" /fo list ^| find "PID:"') do (
+    set "PROCESS_PID=%%a"
+)
+echo Process started with PID: !PROCESS_PID!
+
+echo Process started successfully, waiting %TIMEOUT_SECONDS% seconds...
 timeout /t %TIMEOUT_SECONDS% /nobreak > nul
 
-:: Kill the process and its child processes
-for /f "tokens=2" %%a in ('tasklist /fi "imagename eq %PROCESS_NAME%" /fo list ^| find "PID:"') do (
-    taskkill /F /T /PID %%a >nul 2>&1
-)
-
-:: Verify the process was killed
-timeout /t 1 /nobreak > nul
-tasklist /FI "IMAGENAME eq %PROCESS_NAME%" 2>NUL | find /I /N "%PROCESS_NAME%" >NUL
-if %ERRORLEVEL% equ 0 (
+:: Attempt to terminate the process
+call :terminate_process "%PROCESS_NAME%"
+if %ERRORLEVEL% neq 0 (
     echo [FAILED] %TEST_NAME% - Process could not be terminated
     set /a FAILED_TESTS+=1
 ) else (
