@@ -21,7 +21,7 @@ bool Window::init()
         std::cout << "Successfully loaded config.json" << std::endl;
     }
 
-    const auto &windowConfig = config.getWi_ndowConfig();
+    const auto &windowConfig = config.getWindowConfig();
     const auto &graphicsConfig = config.getGraphicsConfig();
 
     std::cout << "Window config - Title: " << windowConfig.title << ", Size: " << windowConfig.width << "x"
