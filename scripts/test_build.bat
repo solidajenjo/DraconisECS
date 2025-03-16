@@ -137,7 +137,11 @@ del "%TEST_LOG_WARNING%" 2>nul
 exit /b %FAILED_TESTS%
 
 echo Successfully terminated %PROCESS_NAME%
-exit /b 0
+if %FAILED_TESTS% gtr 0 (
+    exit /b 1
+) else (
+    exit /b 0
+)
 
 endlocal
 exit /b 
