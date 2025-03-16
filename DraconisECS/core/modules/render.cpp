@@ -8,25 +8,63 @@ namespace module
 static void GLAPIENTRY openglDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                                            const GLchar *message, const void *userParam)
 {
+    (void)length;    // Unused parameter
+    (void)userParam; // Unused parameter
+
     // Ignore non-significant error/warning codes
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
         return;
 
     std::cerr << "OpenGL Debug - ";
+    
+    // Print source
+    std::cerr << "Source: ";
+    switch (source)
+    {
+        case GL_DEBUG_SOURCE_API: std::cerr << "API"; break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM: std::cerr << "Window System"; break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cerr << "Shader Compiler"; break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY: std::cerr << "Third Party"; break;
+        case GL_DEBUG_SOURCE_APPLICATION: std::cerr << "Application"; break;
+        case GL_DEBUG_SOURCE_OTHER: std::cerr << "Other"; break;
+        default: std::cerr << "Unknown"; break;
+    }
+    
+    // Print type
+    std::cerr << ", Type: ";
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR: std::cerr << "Error"; break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cerr << "Deprecated Behavior"; break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: std::cerr << "Undefined Behavior"; break;
+        case GL_DEBUG_TYPE_PORTABILITY: std::cerr << "Portability"; break;
+        case GL_DEBUG_TYPE_PERFORMANCE: std::cerr << "Performance"; break;
+        case GL_DEBUG_TYPE_MARKER: std::cerr << "Marker"; break;
+        case GL_DEBUG_TYPE_PUSH_GROUP: std::cerr << "Push Group"; break;
+        case GL_DEBUG_TYPE_POP_GROUP: std::cerr << "Pop Group"; break;
+        case GL_DEBUG_TYPE_OTHER: std::cerr << "Other"; break;
+        default: std::cerr << "Unknown"; break;
+    }
+
+    std::cerr << ", ID: " << id;
+    
     switch (severity)
     {
     case GL_DEBUG_SEVERITY_HIGH:
-        std::cerr << "HIGH severity";
+        std::cerr << ", Severity: HIGH";
         break;
     case GL_DEBUG_SEVERITY_MEDIUM:
-        std::cerr << "MEDIUM severity";
+        std::cerr << ", Severity: MEDIUM";
         break;
     case GL_DEBUG_SEVERITY_LOW:
-        std::cerr << "LOW severity";
+        std::cerr << ", Severity: LOW";
+        break;
+    default:
+        std::cerr << ", Severity: UNKNOWN";
         break;
     }
 
-    std::cerr << " (" << type << "): " << message << std::endl;
+    std::cerr << "\nMessage: " << message << std::endl;
 }
 
 Render::Render() : m_DefaultFramebuffer(nullptr), m_ActiveFramebuffer(nullptr), m_ShaderProgram(0), m_VAO(0), m_VBO(0)
