@@ -9,7 +9,7 @@ int main()
         std::cerr << "Failed to initialize app\n";
         return 1;
     }
-
+    LOLOLO
     // Main loop
     while (app::appInstance.update())
     {
