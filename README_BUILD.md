@@ -24,7 +24,8 @@ Build scripts are located in the `scripts` directory. Run the build script from 
 scripts\build.bat            # Debug build (default)
 scripts\build.bat debug      # Debug build explicitly
 scripts\build.bat release    # Release build
-scripts\build.bat clean      # Clean build files
+scripts\build.bat clean      # Clean project-specific build files (preserves SDL2)
+scripts\build.bat clean all  # Clean all build files including SDL2
 ```
 
 The executable and required DLLs will be placed in the `build/bin` directory.
@@ -78,7 +79,8 @@ DraconisECS/
    - Error: "Error copying SDL2d.dll"
    - Solution: 
      - Ensure you have write permissions in the build directory
-     - Try running `.\build.bat clean` before rebuilding
+     - Try running `.\scripts\build.bat clean` to clean project files
+     - If the issue persists, try `.\scripts\build.bat clean all` to rebuild SDL2 as well
 
 4. **Configuration Files Missing**
    - Error: "Failed to load config.json"

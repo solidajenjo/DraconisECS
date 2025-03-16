@@ -18,19 +18,35 @@ if "%~1"=="" (
         set CONFIG=Release
     ) else if /I "%~1"=="debug" (
         set CONFIG=Debug
-    ) else if /I "%~1"=="clean" (
+    ) else if /I "%~1"=="clean" if /I "%~2"=="all" (
         if exist "%BUILD_DIR%" (
-            echo Cleaning build directory...
+            echo Cleaning all build files including SDL2...
             rd /s /q "%BUILD_DIR%"
+            echo All build files cleaned.
+        ) else (
+            echo Build directory does not exist.
         )
+        exit /b 0
+    ) else if /I "%~1"=="clean" (
+        echo Cleaning project-specific build files...
+        :: Delete only project-specific files and directories
+        if exist "%BUILD_DIR%\bin" rd /s /q "%BUILD_DIR%\bin"
+        if exist "%BUILD_DIR%\CMakeFiles" rd /s /q "%BUILD_DIR%\CMakeFiles"
+        if exist "%BUILD_DIR%\DraconisECS.dir" rd /s /q "%BUILD_DIR%\DraconisECS.dir"
+        if exist "%BUILD_DIR%\x64" rd /s /q "%BUILD_DIR%\x64"
+        del /f /q "%BUILD_DIR%\*.cmake" 2>nul
+        del /f /q "%BUILD_DIR%\CMakeCache.txt" 2>nul
+        del /f /q "%BUILD_DIR%\*.ninja" 2>nul
+        echo Project-specific build files cleaned.
         exit /b 0
     ) else (
         echo Error: Unsupported option '%~1'
         echo Supported options are:
-        echo   debug    - Build in Debug configuration
-        echo   release  - Build in Release configuration
-        echo   clean    - Clean the build directory
-        echo   [none]   - Default to Debug configuration
+        echo   debug      - Build in Debug configuration
+        echo   release    - Build in Release configuration
+        echo   clean      - Clean project-specific build files ^(preserves SDL2^)
+        echo   clean all  - Clean all build files including SDL2
+        echo   [none]     - Default to Debug configuration
         exit /b 1
     )
 )
