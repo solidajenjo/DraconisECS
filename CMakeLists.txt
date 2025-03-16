@@ -6,23 +6,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Disable exceptions and set debug flags based on compiler
+# Set compiler flags based on compiler
 if(MSVC)
-    # Disable all exception handling consistently
-    string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    add_compile_options(/EHs-c-)
-    add_definitions(-D_HAS_EXCEPTIONS=0)
+    # Enable exceptions
+    add_compile_options(/EHsc)
     
     # Add debug info in Debug mode
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /Od /DEBUG")
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG")
     
-    # Use debug runtime library in Debug mode
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
+    # Set runtime library based on configuration
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 else()
-    add_compile_options(-fno-exceptions)
-    add_definitions(-DBOOST_NO_EXCEPTIONS)
-    
     # Add debug symbols for non-MSVC compilers
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 endif()

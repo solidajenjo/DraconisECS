@@ -1,0 +1,55 @@
+name: Build Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering
+
+env:
+  CI_BUILD: 1  # Global flag to indicate we're in CI
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest  # We need Windows for Visual Studio
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'  # In case we have submodules
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.3.1
+
+    - name: Setup Visual Studio Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Install CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Install Ninja
+      run: |
+        choco install ninja
+        ninja --version
+
+    - name: Run Build Tests
+      shell: cmd
+      run: |
+        scripts\test_build.bat
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+    - name: Upload Build Logs on Failure
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: build-logs
+        path: |
+          build/CMakeFiles/*.log
+          build/CMakeCache.txt
+          build/*.ninja
+          build/Testing/Temporary/LastTest.log
+        if-no-files-found: ignore 
