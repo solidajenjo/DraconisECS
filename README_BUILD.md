@@ -19,30 +19,31 @@ The following dependencies are included in the repository under the `ThirdParty`
 
 The project uses the Ninja build system for faster builds and better reliability. Ninja is included with Visual Studio 2022's CMake tools.
 
-Simply run the build script from the project root directory:
+Build scripts are located in the `scripts` directory. Run the build script from any location:
 ```bash
-.\build.bat
+scripts\build.bat            # Debug build (default)
+scripts\build.bat debug      # Debug build explicitly
+scripts\build.bat release    # Release build
+scripts\build.bat clean      # Clean build files
 ```
 
 The executable and required DLLs will be placed in the `build/bin` directory.
 
-### Build Configurations
-- Debug build (default): `.\build.bat debug`
-- Release build: `.\build.bat release`
-- Clean build files: `.\build.bat clean`
+> **Note:** All commands are case-insensitive. For example, `debug`, `DEBUG`, and `Debug` are all valid.
 
 ## Running the Project
 
-After building, you can run the application using the run script:
+After building, you can run the application using the run script from any location:
 ```bash
-.\run.bat            # Run release build (default)
-.\run.bat debug      # Run debug build
-.\run.bat release    # Run release build explicitly
+scripts\run.bat            # Run release build (default)
+scripts\run.bat debug      # Run debug build
+scripts\run.bat release    # Run release build explicitly
 ```
 
 The script will automatically:
+- Build the project if needed
 - Check if the build exists
-- Verify the executable is present
+- Verify the executable and DLLs are present
 - Run from the correct directory
 - Return any error codes from the application
 
@@ -54,6 +55,7 @@ DraconisECS/
 │       ├── Debug/     # Debug configuration output
 │       └── Release/   # Release configuration output
 ├── DraconisECS/       # Source code
+├── scripts/           # Build and run scripts
 ├── ThirdParty/        # Third-party dependencies
 ├── config.json        # Application configuration
 ├── layout.json        # UI layout configuration

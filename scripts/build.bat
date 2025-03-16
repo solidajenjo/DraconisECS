@@ -1,21 +1,41 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+:: Store the script directory and change to project root
+set "SCRIPT_DIR=%~dp0"
+set "PROJECT_ROOT=%SCRIPT_DIR%.."
+cd /d "%PROJECT_ROOT%"
+
 :: Set default configuration to Debug
 set CONFIG=Debug
-set BUILD_DIR=build
+set BUILD_DIR=%PROJECT_ROOT%\build
 
-:: Parse command line arguments
-if "%1"=="release" (
-    set CONFIG=Release
-)
-if "%1"=="clean" (
-    if exist %BUILD_DIR% (
-        echo Cleaning build directory...
-        rd /s /q %BUILD_DIR%
+:: Parse command line arguments (case-insensitive)
+if "%~1"=="" (
+    echo No configuration specified, using default: %CONFIG%
+) else (
+    if /I "%~1"=="release" (
+        set CONFIG=Release
+    ) else if /I "%~1"=="debug" (
+        set CONFIG=Debug
+    ) else if /I "%~1"=="clean" (
+        if exist "%BUILD_DIR%" (
+            echo Cleaning build directory...
+            rd /s /q "%BUILD_DIR%"
+        )
+        exit /b 0
+    ) else (
+        echo Error: Unsupported option '%~1'
+        echo Supported options are:
+        echo   debug    - Build in Debug configuration
+        echo   release  - Build in Release configuration
+        echo   clean    - Clean the build directory
+        echo   [none]   - Default to Debug configuration
+        exit /b 1
     )
-    exit /b 0
 )
+
+echo Building with configuration: %CONFIG%
 
 :: Find Visual Studio installation using more specific criteria
 for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
@@ -33,19 +53,19 @@ echo Found Visual Studio at !VS_PATH!
 
 :: Create a temporary batch file to run build commands
 set BUILD_SCRIPT=%TEMP%\build_%RANDOM%.bat
-echo @echo off > %BUILD_SCRIPT%
-echo call "!VS_PATH!\VC\Auxiliary\Build\vcvars64.bat" >> %BUILD_SCRIPT%
-echo set CC=cl.exe >> %BUILD_SCRIPT%
-echo set CXX=cl.exe >> %BUILD_SCRIPT%
-echo cmake -B %BUILD_DIR% -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe >> %BUILD_SCRIPT%
-echo cmake --build %BUILD_DIR% --config %CONFIG% >> %BUILD_SCRIPT%
+echo @echo off > "%BUILD_SCRIPT%"
+echo call "!VS_PATH!\VC\Auxiliary\Build\vcvars64.bat" >> "%BUILD_SCRIPT%"
+echo set CC=cl.exe >> "%BUILD_SCRIPT%"
+echo set CXX=cl.exe >> "%BUILD_SCRIPT%"
+echo cmake -B "%BUILD_DIR%" -G "Ninja Multi-Config" -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe >> "%BUILD_SCRIPT%"
+echo cmake --build "%BUILD_DIR%" --config %CONFIG% >> "%BUILD_SCRIPT%"
 
 :: Run the build script
-call %BUILD_SCRIPT%
+call "%BUILD_SCRIPT%"
 set BUILD_RESULT=%ERRORLEVEL%
 
 :: Clean up the temporary script
-del %BUILD_SCRIPT%
+del "%BUILD_SCRIPT%"
 
 if %BUILD_RESULT% neq 0 (
     echo Build failed with error code %BUILD_RESULT%
@@ -54,11 +74,11 @@ if %BUILD_RESULT% neq 0 (
 
 :: Create bin directory for the current configuration
 set BIN_DIR=%BUILD_DIR%\bin\%CONFIG%
-if not exist %BIN_DIR% mkdir %BIN_DIR%
+if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
 :: Wait for SDL2 build to complete and verify DLL exists
 set SDL2_DLL_PATH=
-if "%CONFIG%"=="Debug" (
+if /I "%CONFIG%"=="Debug" (
     set SDL2_DLL_PATH=%BUILD_DIR%\SDL2_build\Debug\SDL2d.dll
 ) else (
     set SDL2_DLL_PATH=%BUILD_DIR%\SDL2_build\Release\SDL2.dll
@@ -69,7 +89,7 @@ if not exist "!SDL2_DLL_PATH!" (
     echo Error: SDL2 DLL not found at !SDL2_DLL_PATH!
     echo Checking alternative locations...
     
-    if "%CONFIG%"=="Debug" (
+    if /I "%CONFIG%"=="Debug" (
         if exist "%BUILD_DIR%\SDL2_build\SDL2d.dll" (
             set SDL2_DLL_PATH=%BUILD_DIR%\SDL2_build\SDL2d.dll
         )
@@ -97,14 +117,14 @@ copy /Y "!SDL2_DLL_PATH!" "%BIN_DIR%\" || (
 )
 
 :: Check if GLEW DLL exists
-if not exist "ThirdParty\glew-2.2.0\bin\Release\x64\glew32.dll" (
+if not exist "%PROJECT_ROOT%\ThirdParty\glew-2.2.0\bin\Release\x64\glew32.dll" (
     echo Error: GLEW DLL not found in ThirdParty\glew-2.2.0\bin\Release\x64\
     exit /b 1
 )
 
 :: Copy GLEW DLL
 echo Copying glew32.dll...
-copy /Y "ThirdParty\glew-2.2.0\bin\Release\x64\glew32.dll" "%BIN_DIR%\" || (
+copy /Y "%PROJECT_ROOT%\ThirdParty\glew-2.2.0\bin\Release\x64\glew32.dll" "%BIN_DIR%\" || (
     echo Error: Failed to copy GLEW DLL
     exit /b 1
 )
