@@ -43,7 +43,7 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
     - name: Upload Build Logs on Failure
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.0
       if: failure()
       with:
         name: build-logs
