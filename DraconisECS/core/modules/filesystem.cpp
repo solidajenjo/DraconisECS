@@ -70,22 +70,16 @@ bool Filesystem::readJsonFile(const std::string &path, nlohmann::json &outJson)
         return false;
     }
 
-    try
+    // Parse JSON without exceptions
+    auto result = nlohmann::json::parse(content, nullptr, false);
+    if (result.is_discarded())
     {
-        outJson = nlohmann::json::parse(content, nullptr, false);
-        if (outJson.is_discarded())
-        {
-            std::cerr << "[Filesystem] Failed to parse JSON content from: " << path << std::endl;
-            return false;
-        }
-        std::cout << "[Filesystem] Successfully parsed JSON from: " << path << std::endl;
-        return true;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "[Filesystem] Exception while parsing JSON from " << path << ": " << e.what() << std::endl;
+        std::cerr << "[Filesystem] Failed to parse JSON content from: " << path << std::endl;
         return false;
     }
+    outJson = std::move(result);
+    std::cout << "[Filesystem] Successfully parsed JSON from: " << path << std::endl;
+    return true;
 }
 
 bool Filesystem::writeJsonFile(const std::string &path, const nlohmann::json &json)
