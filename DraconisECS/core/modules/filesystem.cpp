@@ -7,36 +7,34 @@
 namespace module
 {
 
-bool Filesystem::readFile(const std::string &path, std::string &outContent)
+bool Filesystem::readFile(const std::string &path, std::string &content)
 {
-    std::cout << "[Filesystem] Reading file: " << path << std::endl;
-
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "[Filesystem] Failed to open file for reading: " << path << std::endl;
+        std::cerr << "[Filesystem] Failed to open file: " << path << std::endl;
         return false;
     }
 
+    // Get file size
     file.seekg(0, std::ios::end);
-    outContent.resize(file.tellg());
+    std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
-    file.read(outContent.data(), outContent.size());
 
-    std::cout << "[Filesystem] Successfully read " << outContent.size() << " bytes from: " << path << std::endl;
+    // Read file content
+    content.resize(static_cast<size_t>(size));
+    if (!file.read(content.data(), size))
+    {
+        std::cerr << "[Filesystem] Failed to read file: " << path << std::endl;
+        return false;
+    }
+
+    std::cout << "[Filesystem] Successfully read file: " << path << std::endl;
     return true;
 }
 
 bool Filesystem::writeFile(const std::string &path, const std::string &content)
 {
-    std::cout << "[Filesystem] Writing file: " << path << std::endl;
-
-    if (!ensureDirectoryExists(path))
-    {
-        std::cerr << "[Filesystem] Failed to create directory for: " << path << std::endl;
-        return false;
-    }
-
     std::ofstream file(path, std::ios::binary);
     if (!file.is_open())
     {
@@ -44,29 +42,21 @@ bool Filesystem::writeFile(const std::string &path, const std::string &content)
         return false;
     }
 
-    file.write(content.data(), content.size());
-    bool success = file.good();
-
-    if (success)
-    {
-        std::cout << "[Filesystem] Successfully wrote " << content.size() << " bytes to: " << path << std::endl;
-    }
-    else
+    if (!file.write(content.data(), content.size()))
     {
         std::cerr << "[Filesystem] Failed to write to file: " << path << std::endl;
+        return false;
     }
 
-    return success;
+    std::cout << "[Filesystem] Successfully wrote to file: " << path << std::endl;
+    return true;
 }
 
 bool Filesystem::readJsonFile(const std::string &path, nlohmann::json &outJson)
 {
-    std::cout << "[Filesystem] Reading JSON file: " << path << std::endl;
-
     std::string content;
     if (!readFile(path, content))
     {
-        std::cerr << "[Filesystem] Failed to read JSON file: " << path << std::endl;
         return false;
     }
 
@@ -77,6 +67,7 @@ bool Filesystem::readJsonFile(const std::string &path, nlohmann::json &outJson)
         std::cerr << "[Filesystem] Failed to parse JSON content from: " << path << std::endl;
         return false;
     }
+
     outJson = std::move(result);
     std::cout << "[Filesystem] Successfully parsed JSON from: " << path << std::endl;
     return true;
@@ -84,47 +75,22 @@ bool Filesystem::readJsonFile(const std::string &path, nlohmann::json &outJson)
 
 bool Filesystem::writeJsonFile(const std::string &path, const nlohmann::json &json)
 {
-    std::cout << "[Filesystem] Writing JSON file: " << path << std::endl;
-
-    try
-    {
-        std::string content = json.dump(4);
-        if (writeFile(path, content))
-        {
-            std::cout << "[Filesystem] Successfully wrote JSON to: " << path << std::endl;
-            return true;
-        }
-        return false;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "[Filesystem] Exception while writing JSON to " << path << ": " << e.what() << std::endl;
-        return false;
-    }
+    std::string content = json.dump(4);
+    return writeFile(path, content);
 }
 
 bool Filesystem::createDirectory(const std::string &path)
 {
-    std::cout << "[Filesystem] Creating directory: " << path << std::endl;
-
-    try
+    std::error_code ec;
+    std::filesystem::create_directories(path, ec);
+    if (ec)
     {
-        bool success = std::filesystem::create_directories(path);
-        if (success)
-        {
-            std::cout << "[Filesystem] Successfully created directory: " << path << std::endl;
-        }
-        else
-        {
-            std::cerr << "[Filesystem] Failed to create directory: " << path << std::endl;
-        }
-        return success;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "[Filesystem] Exception while creating directory " << path << ": " << e.what() << std::endl;
+        std::cerr << "[Filesystem] Failed to create directory: " << path << ": " << ec.message() << std::endl;
         return false;
     }
+
+    std::cout << "[Filesystem] Successfully created directory: " << path << std::endl;
+    return true;
 }
 
 bool Filesystem::exists(const std::string &path)
@@ -150,7 +116,13 @@ std::string Filesystem::getExecutablePath()
 
 std::string Filesystem::getCurrentWorkingDirectory()
 {
-    std::string path = std::filesystem::current_path().string();
+    std::error_code ec;
+    std::string path = std::filesystem::current_path(ec).string();
+    if (ec)
+    {
+        std::cerr << "[Filesystem] Failed to get current working directory: " << ec.message() << std::endl;
+        return "";
+    }
     std::cout << "[Filesystem] Current working directory: " << path << std::endl;
     return path;
 }
@@ -172,24 +144,21 @@ bool Filesystem::ensureDirectoryExists(const std::string &path)
     auto parentPath = filePath.parent_path();
     if (!parentPath.empty())
     {
-        try
+        std::error_code ec;
+        bool success = std::filesystem::create_directories(parentPath, ec);
+        if (ec)
         {
-            bool success = std::filesystem::create_directories(parentPath);
-            if (success)
-            {
-                std::cout << "[Filesystem] Successfully created parent directory: " << parentPath << std::endl;
-            }
-            else
-            {
-                std::cout << "[Filesystem] Parent directory already exists: " << parentPath << std::endl;
-            }
-            return true;
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "[Filesystem] Exception while creating parent directory " << parentPath << ": " << e.what()
-                      << std::endl;
+            std::cerr << "[Filesystem] Failed to create parent directory " << parentPath << ": " << ec.message() << std::endl;
             return false;
+        }
+        
+        if (success)
+        {
+            std::cout << "[Filesystem] Successfully created parent directory: " << parentPath << std::endl;
+        }
+        else
+        {
+            std::cout << "[Filesystem] Parent directory already exists: " << parentPath << std::endl;
         }
     }
     return true;
