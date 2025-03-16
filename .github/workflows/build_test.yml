@@ -43,7 +43,7 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
     - name: Upload Build Logs on Failure
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v3
       if: failure()
       with:
         name: build-logs
@@ -52,4 +52,4 @@ jobs:
           build/CMakeCache.txt
           build/*.ninja
           build/Testing/Temporary/LastTest.log
-        if-no-files-found: ignore 
+        if-no-files-found: ignore
