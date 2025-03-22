@@ -1,4 +1,5 @@
 #include "archetypePanel.h"
+#include "tests/testECS.h"
 #include <imgui.h>
 
 namespace module::editor {
@@ -15,24 +16,29 @@ void ArchetypePanel::render() {
     // Get reference to ECS system
     auto& ecs = app::appInstance.getEcs();
 
+    // Add test buttons at the top
+    if (ImGui::CollapsingHeader("Test Controls")) {
+        if (ImGui::Button("Create Basic Test Entities")) {
+            test::createTestEntities(ecs);
+        }
+        if (ImGui::Button("Create Complex Entities")) {
+            test::createComplexEntities(ecs);
+        }
+        if (ImGui::Button("Create Performance Test Entities")) {
+            test::createPerformanceTestEntities(ecs);
+        }
+        ImGui::Separator();
+    }
+
     // Display total entity count
     ImGui::Text("Total Entities: %zu", ecs.entities.size());
 
     // Display archetypes
     for (const auto& [signature, archetype] : ecs.archetypes) {
+        // Push unique ID for this archetype
+        ImGui::PushID(static_cast<int>(reinterpret_cast<uintptr_t>(archetype.get())));
+        
         if (ImGui::CollapsingHeader(("Archetype " + std::to_string(reinterpret_cast<uintptr_t>(archetype.get()))).c_str())) {
-            // Display component signature
-            ImGui::Text("Component Signature:");
-            std::string signatureStr;
-            for (size_t i = 0; i < ecs::MAX_COMPONENTS; ++i) {
-                if (signature[i]) {
-                    signatureStr += "1";
-                } else {
-                    signatureStr += "0";
-                }
-            }
-            ImGui::TextWrapped("%s", signatureStr.c_str());
-
             // Display entity count
             ImGui::Text("Entities: %zu", archetype->entityCount);
 
@@ -40,6 +46,9 @@ void ArchetypePanel::render() {
             if (ImGui::TreeNode("Chunks")) {
                 for (size_t i = 0; i < archetype->chunks.size(); ++i) {
                     const auto& chunk = archetype->chunks[i];
+                    // Push unique ID for this chunk
+                    ImGui::PushID(static_cast<int>(i));
+                    
                     if (ImGui::TreeNode(("Chunk " + std::to_string(i)).c_str())) {
                         // Display chunk usage
                         ImGui::Text("Used Size: %zu/%d", chunk->usedSize, ecs::CHUNK_SIZE);
@@ -62,13 +71,18 @@ void ArchetypePanel::render() {
                         // Display entities in chunk
                         if (ImGui::TreeNode("Entities")) {
                             for (size_t j = 0; j < chunk->usedSize; ++j) {
+                                // Push unique ID for each entity
+                                ImGui::PushID(static_cast<int>(j));
                                 ImGui::Text("Entity %zu", archetype->entityIds[j]);
+                                ImGui::PopID();
                             }
                             ImGui::TreePop();
                         }
 
                         ImGui::TreePop();
                     }
+                    
+                    ImGui::PopID(); // Pop chunk ID
                 }
                 ImGui::TreePop();
             }
@@ -88,6 +102,8 @@ void ArchetypePanel::render() {
                 ImGui::TreePop();
             }
         }
+        
+        ImGui::PopID(); // Pop archetype ID
     }
 
     ImGui::End();
