@@ -4,6 +4,7 @@
 #include "core/modules/input.h"
 #include "core/modules/render.h"
 #include "core/modules/window.h"
+#include "core/ecs.h"
 #include <tuple>
 
 #define MODULES module::Window, module::Input, module::Render, module::Editor
@@ -17,6 +18,7 @@ template <typename... Modules> class App
   private:
     std::tuple<Modules...> modules;
     bool shouldClose = false;
+    ecs::Ecs ecs;
 
   public:
     // Initialize all modules
@@ -61,6 +63,9 @@ template <typename... Modules> class App
     {
         return std::get<T>(modules);
     }
+
+    // Get ECS system
+    ecs::Ecs& getEcs() { return ecs; }
 };
 
 extern App<MODULES> appInstance;

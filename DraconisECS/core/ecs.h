@@ -8,12 +8,12 @@
 #include <cstdint>
 #include <tuple>
 
-#define CHUNK_SIZE 16384
-#define MAX_COMPONENTS 256
-#define INITIAL_ENTITY_CAPACITY 64
-
 namespace ecs
 {
+    constexpr size_t CHUNK_SIZE = 16384;
+    constexpr size_t MAX_COMPONENTS = 256;
+    constexpr size_t INITIAL_ENTITY_CAPACITY = 64;
+
     // Component type ID generation
     inline size_t typeIdSeq = 0;
     template<typename T> inline const size_t typeId = typeIdSeq++;

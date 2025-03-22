@@ -3,6 +3,7 @@
 #include "core/editorPanels/configPanel.h"
 #include "core/editorPanels/renderPanel.h"
 #include "core/editorPanels/stylePanel.h"
+#include "core/editorPanels/archetypePanel.h"
 #include "filesystem.h"
 #include "window.h"
 #include <SDL.h>
@@ -45,6 +46,7 @@ bool Editor::init()
     // Add editor panels
     addPanel<editor::ConfigPanel>();
     addPanel<editor::StylePanel>();
+    addPanel<editor::ArchetypePanel>();
 
     // Add render panel with render module dependency
     Render &renderModule = app::appInstance.getModule<Render>();

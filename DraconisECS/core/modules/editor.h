@@ -9,9 +9,7 @@
 
 struct SDL_Window;
 
-namespace module
-{
-namespace editor
+namespace module::editor
 {
 // Forward declarations
 class EditorPanel;
@@ -57,8 +55,10 @@ struct MenuItem
     std::function<void()> callback;
     std::vector<MenuItem> subItems;
 };
-} // namespace editor
+} // namespace module::editor
 
+namespace module
+{
 class Editor : public Module
 {
   public:
