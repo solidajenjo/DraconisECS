@@ -64,27 +64,28 @@ void ArchetypePanel::render() {
         ImGui::TableSetupColumn("Chunks");
         ImGui::TableHeadersRow();
 
-        for (const auto& [signature, archetype] : ecs.getArchetypes()) {
+        auto archetypeViews = ecs.getArchetypeViews();
+        for (const auto& view : archetypeViews) {
             ImGui::TableNextRow();
             
             // Archetype name column
             ImGui::TableNextColumn();
-            std::string archetypeName = getArchetypeName(signature);
+            std::string archetypeName = getArchetypeName(view.getSignature());
             ImGui::Text("%s", archetypeName.c_str());
 
             // Entity count column
             ImGui::TableNextColumn();
-            ImGui::Text("%zu", archetype->getEntityCount());
+            ImGui::Text("%zu", view.getEntityCount());
 
             // Memory usage column
             ImGui::TableNextColumn();
             size_t totalSize = 0;
             for (size_t i = 0; i < ::ecs::MAX_COMPONENTS; ++i) {
-                if (signature.test(i)) {
+                if (view.getSignature().test(i)) {
                     totalSize += ::ecs::ComponentRegistry::getInstance().getComponentSize(i);
                 }
             }
-            size_t totalMemory = totalSize * archetype->getEntityCount();
+            size_t totalMemory = totalSize * view.getEntityCount();
             ImGui::Text("%zu bytes", totalMemory);
 
             // Chunks column
@@ -95,8 +96,8 @@ void ArchetypePanel::render() {
                 ImGui::TableSetupColumn("Memory");
                 ImGui::TableHeadersRow();
 
-                for (size_t i = 0; i < archetype->getChunks().size(); ++i) {
-                    const auto& chunk = archetype->getChunks()[i];
+                for (size_t i = 0; i < view.getChunks().size(); ++i) {
+                    const auto& chunk = view.getChunks()[i];
                     ImGui::TableNextRow();
                     
                     // Chunk index
@@ -133,10 +134,11 @@ void ArchetypePanel::render() {
         ImGui::TableHeadersRow();
 
         std::unordered_map<size_t, size_t> componentCounts;
-        for (const auto& [signature, archetype] : ecs.getArchetypes()) {
+        auto archetypeViews = ecs.getArchetypeViews();
+        for (const auto& view : archetypeViews) {
             for (size_t i = 0; i < ::ecs::MAX_COMPONENTS; ++i) {
-                if (signature.test(i)) {
-                    componentCounts[i] += archetype->getEntityCount();
+                if (view.getSignature().test(i)) {
+                    componentCounts[i] += view.getEntityCount();
                 }
             }
         }

@@ -1,6 +1,6 @@
 #pragma once
 #include "core/modules/editor.h"
-#include "core/ecs.h"
+#include "core/ecs/ecs.h"
 #include "app.h"
 #include <imgui.h>
 #include <vector>

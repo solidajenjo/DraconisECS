@@ -4,7 +4,7 @@
 #include "core/modules/input.h"
 #include "core/modules/render.h"
 #include "core/modules/window.h"
-#include "core/ecs.h"
+#include "core/ecs/ecs.h"
 #include <tuple>
 
 #define MODULES module::Window, module::Input, module::Render, module::Editor
