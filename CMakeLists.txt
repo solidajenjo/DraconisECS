@@ -82,6 +82,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/DraconisECS
     ${CMAKE_CURRENT_SOURCE_DIR}/DraconisECS/core
     ${CMAKE_CURRENT_SOURCE_DIR}/DraconisECS/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/DraconisECS/config
     ${SDL2_DIR}/include
     ${GLEW_DIR}/include
     ${IMGUI_DIR}

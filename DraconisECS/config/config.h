@@ -59,4 +59,4 @@ class Config
     WindowConfig windowConfig;
     GraphicsConfig graphicsConfig;
 };
-} // namespace core
+} // namespace core 

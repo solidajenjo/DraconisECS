@@ -1,5 +1,5 @@
-#include "Config.h"
-#include "modules/filesystem.h"
+#include "config.h"
+#include "../core/modules/filesystem.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 
@@ -83,4 +83,4 @@ bool Config::saveToFile(const std::string &filename) const
     std::cout << "Successfully saved config to: " << filename << std::endl;
     return true;
 }
-} // namespace core
+} // namespace core 

@@ -1,5 +1,5 @@
 #include "window.h"
-#include "core/config.h"
+#include "config/config.h"
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <iostream>
