@@ -53,7 +53,7 @@ void ArchetypePanel::render() {
     }
 
     // Display total entity count
-    ImGui::Text("Total Entities: %zu", ecs.entities.size());
+    ImGui::Text("Total Entities: %zu", ecs.getEntities().size());
     ImGui::Separator();
 
     // Display archetypes in a table
@@ -64,7 +64,7 @@ void ArchetypePanel::render() {
         ImGui::TableSetupColumn("Chunks");
         ImGui::TableHeadersRow();
 
-        for (const auto& [signature, archetype] : ecs.archetypes) {
+        for (const auto& [signature, archetype] : ecs.getArchetypes()) {
             ImGui::TableNextRow();
             
             // Archetype name column
@@ -74,7 +74,7 @@ void ArchetypePanel::render() {
 
             // Entity count column
             ImGui::TableNextColumn();
-            ImGui::Text("%zu", archetype->entityCount);
+            ImGui::Text("%zu", archetype->getEntityCount());
 
             // Memory usage column
             ImGui::TableNextColumn();
@@ -84,7 +84,7 @@ void ArchetypePanel::render() {
                     totalSize += ::ecs::ComponentRegistry::getInstance().getComponentSize(i);
                 }
             }
-            size_t totalMemory = totalSize * archetype->entityCount;
+            size_t totalMemory = totalSize * archetype->getEntityCount();
             ImGui::Text("%zu bytes", totalMemory);
 
             // Chunks column
@@ -95,8 +95,8 @@ void ArchetypePanel::render() {
                 ImGui::TableSetupColumn("Memory");
                 ImGui::TableHeadersRow();
 
-                for (size_t i = 0; i < archetype->chunks.size(); ++i) {
-                    const auto& chunk = archetype->chunks[i];
+                for (size_t i = 0; i < archetype->getChunks().size(); ++i) {
+                    const auto& chunk = archetype->getChunks()[i];
                     ImGui::TableNextRow();
                     
                     // Chunk index
@@ -105,17 +105,17 @@ void ArchetypePanel::render() {
 
                     // Usage
                     ImGui::TableNextColumn();
-                    float entityRatio = static_cast<float>(chunk->entityCount) / chunk->getMaxEntities();
+                    float entityRatio = static_cast<float>(chunk->getEntityCount()) / chunk->getMaxEntities();
                     ImGui::ProgressBar(entityRatio, ImVec2(-1, 0), "");
                     ImGui::SameLine();
-                    ImGui::Text("%zu/%zu", chunk->entityCount, chunk->getMaxEntities());
+                    ImGui::Text("%zu/%zu", chunk->getEntityCount(), chunk->getMaxEntities());
 
                     // Memory
                     ImGui::TableNextColumn();
-                    float memoryRatio = static_cast<float>(chunk->usedSize) / (chunk->getMaxEntities() * totalSize);
+                    float memoryRatio = static_cast<float>(chunk->getUsedSize()) / (chunk->getMaxEntities() * totalSize);
                     ImGui::ProgressBar(memoryRatio, ImVec2(-1, 0), "");
                     ImGui::SameLine();
-                    ImGui::Text("%zu/%zu", chunk->usedSize, chunk->getMaxEntities() * totalSize);
+                    ImGui::Text("%zu/%zu", chunk->getUsedSize(), chunk->getMaxEntities() * totalSize);
                 }
                 ImGui::EndTable();
             }
@@ -133,10 +133,10 @@ void ArchetypePanel::render() {
         ImGui::TableHeadersRow();
 
         std::unordered_map<size_t, size_t> componentCounts;
-        for (const auto& [signature, archetype] : ecs.archetypes) {
+        for (const auto& [signature, archetype] : ecs.getArchetypes()) {
             for (size_t i = 0; i < ::ecs::MAX_COMPONENTS; ++i) {
                 if (signature.test(i)) {
-                    componentCounts[i] += archetype->entityCount;
+                    componentCounts[i] += archetype->getEntityCount();
                 }
             }
         }

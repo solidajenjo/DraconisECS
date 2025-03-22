@@ -28,17 +28,33 @@ namespace ecs
 
     // Entity represents a unique ID with its archetype
     struct Entity {
+    private:
         size_t id;
         Archetype* archetype;
         size_t chunkIndex;
         size_t entityIndex;
 
+    public:
         Entity(size_t entityId, Archetype* arch, size_t chunkIdx, size_t entityIdx)
             : id(entityId), archetype(arch), chunkIndex(chunkIdx), entityIndex(entityIdx) {}
+
+        size_t getId() const { return id; }
+        Archetype* getArchetype() const { return archetype; }
+        size_t getChunkIndex() const { return chunkIndex; }
+        size_t getEntityIndex() const { return entityIndex; }
+
+        void setChunkIndex(size_t idx) { chunkIndex = idx; }
+        void setEntityIndex(size_t idx) { entityIndex = idx; }
+        void setArchetype(Archetype* arch) { archetype = arch; }
     };
 
     // Component registry for runtime size lookup
     class ComponentRegistry {
+    private:
+        ComponentRegistry() = default;
+        std::unordered_map<size_t, size_t> sizes;
+        std::unordered_map<size_t, const char*> names;
+
     public:
         static ComponentRegistry& getInstance() {
             static ComponentRegistry instance;
@@ -77,21 +93,17 @@ namespace ecs
             }
             return totalSize;
         }
-
-    private:
-        ComponentRegistry() = default;
-        std::unordered_map<size_t, size_t> sizes;
-        std::unordered_map<size_t, const char*> names;
     };
 
     // Chunk represents a fixed-size block of memory for component data
     class Chunk {
-    public:
+    private:
         Archetype* archetype;
         std::vector<uint8_t> data;  // Fixed-size chunk data
         size_t usedSize = 0;
         size_t entityCount = 0;
 
+    public:
         Chunk(Archetype* arch) : archetype(arch) {
             data.resize(CHUNK_SIZE);  // Allocate exactly 16KB
         }
@@ -105,17 +117,41 @@ namespace ecs
             return reinterpret_cast<T*>(data.data() + index * componentSize<T>);
         }
 
+        // Copy component data from source to target position
+        void copyComponentData(size_t sourceIndex, size_t targetIndex, size_t componentSize) {
+            uint8_t* sourceData = data.data() + sourceIndex * componentSize;
+            uint8_t* targetData = data.data() + targetIndex * componentSize;
+            std::memcpy(targetData, sourceData, componentSize);
+        }
+
+        // Copy component data from another chunk
+        void copyComponentDataFromChunk(const Chunk* sourceChunk, size_t sourceIndex, size_t targetIndex, size_t componentSize) {
+            const uint8_t* sourceData = sourceChunk->data.data() + sourceIndex * componentSize;
+            uint8_t* targetData = data.data() + targetIndex * componentSize;
+            std::memcpy(targetData, sourceData, componentSize);
+        }
+
         size_t getMaxEntities() const;
+        Archetype* getArchetype() const { return archetype; }
+        size_t getUsedSize() const { return usedSize; }
+        size_t getEntityCount() const { return entityCount; }
+        const std::vector<uint8_t>& getData() const { return data; }
+
+        void setUsedSize(size_t size) { usedSize = size; }
+        void setEntityCount(size_t count) { entityCount = count; }
+        void incrementEntityCount() { entityCount++; }
+        void decrementEntityCount() { entityCount--; }
     };
 
     // Archetype represents a unique combination of components
     class Archetype {
-    public:
+    private:
         std::bitset<MAX_COMPONENTS> signature;  // Component signature
         std::vector<size_t> entityIds;  // Entity IDs in this archetype
         std::vector<std::unique_ptr<Chunk>> chunks;  // Owned chunks
         size_t entityCount = 0;
 
+    public:
         Archetype(const std::bitset<MAX_COMPONENTS>& sig) : signature(sig) {
             entityIds.reserve(INITIAL_ENTITY_CAPACITY);
         }
@@ -135,6 +171,7 @@ namespace ecs
         void removeEntity(size_t index) {
             // Move last entity to this position
             if (index < entityCount - 1) {
+                // Move entity ID
                 entityIds[index] = entityIds[entityCount - 1];
                 
                 // Calculate chunk and entity indices
@@ -148,9 +185,12 @@ namespace ecs
                 for (size_t i = 0; i < MAX_COMPONENTS; ++i) {
                     if (signature.test(i)) {
                         size_t compSize = ComponentRegistry::getInstance().getComponentSize(i);
-                        uint8_t* oldData = chunks[oldChunkIndex]->data.data() + oldEntityIndex * compSize;
-                        uint8_t* lastData = chunks[lastChunkIndex]->data.data() + lastEntityIndex * compSize;
-                        std::memcpy(oldData, lastData, compSize);
+                        chunks[oldChunkIndex]->copyComponentDataFromChunk(
+                            chunks[lastChunkIndex].get(),
+                            lastEntityIndex,
+                            oldEntityIndex,
+                            compSize
+                        );
                     }
                 }
             }
@@ -158,15 +198,21 @@ namespace ecs
         }
 
         Chunk* getOrCreateChunk(Ecs* ecs);
+        const std::bitset<MAX_COMPONENTS>& getSignature() const { return signature; }
+        const std::vector<size_t>& getEntityIds() const { return entityIds; }
+        size_t getEntityCount() const { return entityCount; }
+        const std::vector<std::unique_ptr<Chunk>>& getChunks() const { return chunks; }
+        std::vector<std::unique_ptr<Chunk>>& getMutableChunks() { return chunks; }
     };
 
     // Ecs manages the entire ECS system
     class Ecs {
-    public:
+    private:
         std::unordered_map<std::bitset<MAX_COMPONENTS>, std::unique_ptr<Archetype>> archetypes;
         std::vector<Entity> entities;
         size_t nextEntityId = 0;
 
+    public:
         // Helper function to initialize a single component with its initializer
         template<typename T>
         void initializeComponent(Archetype* archetype, size_t entityIndex, const T& initializer) {
@@ -194,92 +240,92 @@ namespace ecs
 
             // Get or create chunk
             Chunk* chunk = archetype->getOrCreateChunk(this);
-            size_t chunkIndex = std::distance(archetype->chunks.begin(),
-                std::find_if(archetype->chunks.begin(), archetype->chunks.end(),
+            size_t chunkIndex = std::distance(archetype->getChunks().begin(),
+                std::find_if(archetype->getChunks().begin(), archetype->getChunks().end(),
                     [chunk](const auto& c) { return c.get() == chunk; }));
 
             // Create entity
-            size_t entityIndex = chunk->entityCount;
+            size_t entityIndex = chunk->getEntityCount();
             Entity entity(nextEntityId++, archetype, chunkIndex, entityIndex);
             entities.push_back(entity);
 
             // Initialize components with initializers
-            archetype->addEntity(entity.id);
+            archetype->addEntity(entity.getId());
             (initializeComponent(archetype, entityIndex, initializers), ...);
 
             // Update chunk usage
-            chunk->entityCount++;
-            chunk->usedSize = chunk->entityCount * ComponentRegistry::getInstance().getTotalComponentSize(archetype->signature);
+            chunk->incrementEntityCount();
+            chunk->setUsedSize(chunk->getEntityCount() * ComponentRegistry::getInstance().getTotalComponentSize(archetype->getSignature()));
 
             return entity;
         }
 
         template<typename T>
         T* getComponent(const Entity& entity) {
-            return entity.archetype->getComponent<T>(entity.entityIndex);
+            return entity.getArchetype()->getComponent<T>(entity.getEntityIndex());
         }
 
         void destroyEntity(const Entity& entity) {
             // Remove from archetype
-            entity.archetype->removeEntity(entity.entityIndex);
+            entity.getArchetype()->removeEntity(entity.getEntityIndex());
             
             // Update chunk usage
-            Chunk* chunk = entity.archetype->chunks[entity.chunkIndex].get();
-            chunk->entityCount--;
-            chunk->usedSize = chunk->entityCount * ComponentRegistry::getInstance().getTotalComponentSize(entity.archetype->signature);
+            Chunk* chunk = entity.getArchetype()->getChunks()[entity.getChunkIndex()].get();
+            chunk->decrementEntityCount();
+            chunk->setUsedSize(chunk->getEntityCount() * ComponentRegistry::getInstance().getTotalComponentSize(entity.getArchetype()->getSignature()));
             
             // Optimize chunk usage after entity removal
-            if (entity.archetype->chunks.size() > 1) {
+            if (entity.getArchetype()->getChunks().size() > 1) {
                 // If this chunk is not the last one and is not full, redistribute entities
-                if (entity.chunkIndex < entity.archetype->chunks.size() - 1) {
+                if (entity.getChunkIndex() < entity.getArchetype()->getChunks().size() - 1) {
                     Chunk* currentChunk = chunk;
-                    Chunk* lastChunk = entity.archetype->chunks.back().get();
+                    Chunk* lastChunk = entity.getArchetype()->getChunks().back().get();
                     size_t maxEntitiesPerChunk = currentChunk->getMaxEntities();
                     
                     // If current chunk has space and last chunk has entities, redistribute
-                    if (currentChunk->entityCount < maxEntitiesPerChunk && lastChunk->entityCount > 0) {
+                    if (currentChunk->getEntityCount() < maxEntitiesPerChunk && lastChunk->getEntityCount() > 0) {
                         size_t entitiesToMove = std::min(
-                            maxEntitiesPerChunk - currentChunk->entityCount,
-                            lastChunk->entityCount
+                            maxEntitiesPerChunk - currentChunk->getEntityCount(),
+                            lastChunk->getEntityCount()
                         );
 
                         // Move entities from last chunk to current chunk
                         for (size_t j = 0; j < entitiesToMove; ++j) {
-                            size_t sourceIndex = lastChunk->entityCount - entitiesToMove + j;
-                            size_t targetIndex = currentChunk->entityCount + j;
+                            size_t sourceIndex = lastChunk->getEntityCount() - entitiesToMove + j;
+                            size_t targetIndex = currentChunk->getEntityCount() + j;
 
                             // Get the entity ID being moved
-                            size_t movedEntityId = entity.archetype->entityIds[entity.archetype->entityCount - entitiesToMove + j];
+                            size_t movedEntityId = entity.getArchetype()->getEntityIds()[entity.getArchetype()->getEntityCount() - entitiesToMove + j];
 
                             // Move each component
                             for (size_t comp = 0; comp < MAX_COMPONENTS; ++comp) {
-                                if (entity.archetype->signature.test(comp)) {
+                                if (entity.getArchetype()->getSignature().test(comp)) {
                                     size_t compSize = ComponentRegistry::getInstance().getComponentSize(comp);
-                                    uint8_t* sourceData = lastChunk->data.data() + sourceIndex * compSize;
-                                    uint8_t* targetData = currentChunk->data.data() + targetIndex * compSize;
-                                    std::memcpy(targetData, sourceData, compSize);
+                                    currentChunk->copyComponentDataFromChunk(
+                                        lastChunk,
+                                        sourceIndex,
+                                        targetIndex,
+                                        compSize
+                                    );
                                 }
                             }
 
                             // Update the entity reference in the entities list
-                            auto& entityRef = *std::find_if(entities.begin(), entities.end(),
-                                [&](Entity& e) { return e.id == movedEntityId; });
-                            entityRef.chunkIndex = entity.chunkIndex;
-                            entityRef.entityIndex = targetIndex;
+                            updateEntityReference(movedEntityId, entity.getArchetype(), entity.getChunkIndex(), targetIndex);
                         }
 
                         // Update entity counts and sizes
-                        currentChunk->entityCount += entitiesToMove;
-                        currentChunk->usedSize = currentChunk->entityCount * 
-                            ComponentRegistry::getInstance().getTotalComponentSize(entity.archetype->signature);
+                        currentChunk->setEntityCount(currentChunk->getEntityCount() + entitiesToMove);
+                        currentChunk->setUsedSize(currentChunk->getEntityCount() * 
+                            ComponentRegistry::getInstance().getTotalComponentSize(entity.getArchetype()->getSignature()));
                         
-                        lastChunk->entityCount -= entitiesToMove;
-                        lastChunk->usedSize = lastChunk->entityCount * 
-                            ComponentRegistry::getInstance().getTotalComponentSize(entity.archetype->signature);
+                        lastChunk->setEntityCount(lastChunk->getEntityCount() - entitiesToMove);
+                        lastChunk->setUsedSize(lastChunk->getEntityCount() * 
+                            ComponentRegistry::getInstance().getTotalComponentSize(entity.getArchetype()->getSignature()));
 
                         // If the last chunk is now empty, remove it
-                        if (lastChunk->entityCount == 0) {
-                            entity.archetype->chunks.pop_back();
+                        if (lastChunk->getEntityCount() == 0) {
+                            entity.getArchetype()->getMutableChunks().pop_back();
                         }
                     }
                 }
@@ -287,7 +333,7 @@ namespace ecs
             
             // Remove from entities list
             auto it = std::find_if(entities.begin(), entities.end(),
-                [&](const Entity& e) { return e.id == entity.id; });
+                [&](const Entity& e) { return e.getId() == entity.getId(); });
             if (it != entities.end()) {
                 entities.erase(it);
             }
@@ -300,7 +346,7 @@ namespace ecs
             ComponentRegistry::getInstance().registerComponent<T>();
 
             // Create new signature with added component
-            std::bitset<MAX_COMPONENTS> newSignature = entity.archetype->signature;
+            std::bitset<MAX_COMPONENTS> newSignature = entity.getArchetype()->getSignature();
             newSignature.set(typeId<T>);
 
             // Find or create new archetype
@@ -314,21 +360,24 @@ namespace ecs
 
             // Get or create chunk in new archetype
             Chunk* newChunk = newArchetype->getOrCreateChunk(this);
-            size_t newChunkIndex = std::distance(newArchetype->chunks.begin(),
-                std::find_if(newArchetype->chunks.begin(), newArchetype->chunks.end(),
+            size_t newChunkIndex = std::distance(newArchetype->getChunks().begin(),
+                std::find_if(newArchetype->getChunks().begin(), newArchetype->getChunks().end(),
                     [newChunk](const auto& c) { return c.get() == newChunk; }));
 
             // Copy all components to new archetype
-            size_t newEntityIndex = newChunk->entityCount;
-            newArchetype->addEntity(entity.id);
+            size_t newEntityIndex = newChunk->getEntityCount();
+            newArchetype->addEntity(entity.getId());
 
             // Copy existing components
             for (size_t i = 0; i < MAX_COMPONENTS; ++i) {
-                if (entity.archetype->signature.test(i)) {
+                if (entity.getArchetype()->getSignature().test(i)) {
                     size_t compSize = ComponentRegistry::getInstance().getComponentSize(i);
-                    uint8_t* oldData = entity.archetype->chunks[entity.chunkIndex]->data.data() + entity.entityIndex * compSize;
-                    uint8_t* newData = newChunk->data.data() + newEntityIndex * compSize;
-                    std::memcpy(newData, oldData, compSize);
+                    newChunk->copyComponentDataFromChunk(
+                        entity.getArchetype()->getChunks()[entity.getChunkIndex()].get(),
+                        entity.getEntityIndex(),
+                        newEntityIndex,
+                        compSize
+                    );
                 }
             }
 
@@ -336,18 +385,14 @@ namespace ecs
             T& newComponent = *new (newArchetype->getComponent<T>(newEntityIndex)) T(initializer);
 
             // Update chunk usage
-            newChunk->entityCount++;
-            newChunk->usedSize = newChunk->entityCount * ComponentRegistry::getInstance().getTotalComponentSize(newArchetype->signature);
+            newChunk->incrementEntityCount();
+            newChunk->setUsedSize(newChunk->getEntityCount() * ComponentRegistry::getInstance().getTotalComponentSize(newArchetype->getSignature()));
 
             // Remove from old archetype
-            entity.archetype->removeEntity(entity.entityIndex);
+            entity.getArchetype()->removeEntity(entity.getEntityIndex());
 
             // Update entity reference
-            auto& entityRef = *std::find_if(entities.begin(), entities.end(),
-                [&](Entity& e) { return e.id == entity.id; });
-            entityRef.archetype = newArchetype;
-            entityRef.chunkIndex = newChunkIndex;
-            entityRef.entityIndex = newEntityIndex;
+            updateEntityReference(entity.getId(), newArchetype, newChunkIndex, newEntityIndex);
 
             return newComponent;
         }
@@ -355,7 +400,7 @@ namespace ecs
         template<typename T>
         void removeComponent(const Entity& entity) {
             // Create new signature without the component
-            std::bitset<MAX_COMPONENTS> newSignature = entity.archetype->signature;
+            std::bitset<MAX_COMPONENTS> newSignature = entity.getArchetype()->getSignature();
             newSignature.reset(typeId<T>);
 
             // Find or create new archetype
@@ -369,116 +414,127 @@ namespace ecs
 
             // Get or create chunk in new archetype
             Chunk* newChunk = newArchetype->getOrCreateChunk(this);
-            size_t newChunkIndex = std::distance(newArchetype->chunks.begin(),
-                std::find_if(newArchetype->chunks.begin(), newArchetype->chunks.end(),
+            size_t newChunkIndex = std::distance(newArchetype->getChunks().begin(),
+                std::find_if(newArchetype->getChunks().begin(), newArchetype->getChunks().end(),
                     [newChunk](const auto& c) { return c.get() == newChunk; }));
 
             // Copy all components except the one being removed
-            size_t newEntityIndex = newChunk->entityCount;
-            newArchetype->addEntity(entity.id);
+            size_t newEntityIndex = newChunk->getEntityCount();
+            newArchetype->addEntity(entity.getId());
 
             // Copy existing components
             for (size_t i = 0; i < MAX_COMPONENTS; ++i) {
-                if (entity.archetype->signature.test(i) && i != typeId<T>) {
+                if (entity.getArchetype()->getSignature().test(i) && i != typeId<T>) {
                     size_t compSize = ComponentRegistry::getInstance().getComponentSize(i);
-                    uint8_t* oldData = entity.archetype->chunks[entity.chunkIndex]->data.data() + entity.entityIndex * compSize;
-                    uint8_t* newData = newChunk->data.data() + newEntityIndex * compSize;
-                    std::memcpy(newData, oldData, compSize);
+                    newChunk->copyComponentDataFromChunk(
+                        entity.getArchetype()->getChunks()[entity.getChunkIndex()].get(),
+                        entity.getEntityIndex(),
+                        newEntityIndex,
+                        compSize
+                    );
                 }
             }
 
             // Update chunk usage
-            newChunk->entityCount++;
-            newChunk->usedSize = newChunk->entityCount * ComponentRegistry::getInstance().getTotalComponentSize(newArchetype->signature);
+            newChunk->incrementEntityCount();
+            newChunk->setUsedSize(newChunk->getEntityCount() * ComponentRegistry::getInstance().getTotalComponentSize(newArchetype->getSignature()));
 
             // Remove from old archetype
-            entity.archetype->removeEntity(entity.entityIndex);
+            entity.getArchetype()->removeEntity(entity.getEntityIndex());
 
             // Update entity reference
-            auto& entityRef = *std::find_if(entities.begin(), entities.end(),
-                [&](Entity& e) { return e.id == entity.id; });
-            entityRef.archetype = newArchetype;
-            entityRef.chunkIndex = newChunkIndex;
-            entityRef.entityIndex = newEntityIndex;
+            updateEntityReference(entity.getId(), newArchetype, newChunkIndex, newEntityIndex);
         }
+
+        // Update this method to handle all entity reference updates
+        void updateEntityReference(size_t entityId, Archetype* archetype, size_t chunkIndex, size_t entityIndex) {
+            auto& entityRef = *std::find_if(entities.begin(), entities.end(),
+                [&](Entity& e) { return e.getId() == entityId; });
+            entityRef.setArchetype(archetype);
+            entityRef.setChunkIndex(chunkIndex);
+            entityRef.setEntityIndex(entityIndex);
+        }
+
+        // Add getters for testing and UI
+        const std::vector<Entity>& getEntities() const { return entities; }
+        const std::unordered_map<std::bitset<MAX_COMPONENTS>, std::unique_ptr<Archetype>>& getArchetypes() const { return archetypes; }
     };
 
     // Implementation of Chunk::getMaxEntities
     inline size_t Chunk::getMaxEntities() const {
-        if (archetype->signature.count() == 0) return 0;
-        size_t totalComponentSize = ComponentRegistry::getInstance().getTotalComponentSize(archetype->signature);
+        if (archetype->getSignature().count() == 0) return 0;
+        size_t totalComponentSize = ComponentRegistry::getInstance().getTotalComponentSize(archetype->getSignature());
         return CHUNK_SIZE / totalComponentSize;
     }
 
-    
     inline Chunk* Archetype::getOrCreateChunk(Ecs* ecs) {
-            // First check if the last chunk has space
-            if (!chunks.empty() && chunks.back()->hasSpace()) {
-                return chunks.back().get();
-            }
-
-            // If we have more than one chunk and the last one isn't full,
-            // redistribute entities to fill gaps in previous chunks
-            if (chunks.size() > 1 && !chunks.back()->hasSpace()) {
-                size_t maxEntitiesPerChunk = chunks[0]->getMaxEntities();
-                size_t lastChunkIndex = chunks.size() - 1;
-                Chunk* lastChunk = chunks[lastChunkIndex].get();
-                
-                // Move entities from the last chunk to fill gaps in previous chunks
-                while (lastChunk->entityCount > 0) {
-                    bool moved = false;
-                    for (size_t i = 0; i < lastChunkIndex; ++i) {
-                        Chunk* targetChunk = chunks[i].get();
-                        if (targetChunk->hasSpace()) {
-                            // Calculate indices
-                            size_t lastEntityIndex = lastChunk->entityCount - 1;
-                            size_t targetEntityIndex = targetChunk->entityCount;
-                            
-                            // Move component data
-                            for (size_t compIndex = 0; compIndex < MAX_COMPONENTS; ++compIndex) {
-                                if (signature.test(compIndex)) {
-                                    size_t compSize = ComponentRegistry::getInstance().getComponentSize(compIndex);
-                                    uint8_t* sourceData = lastChunk->data.data() + lastEntityIndex * compSize;
-                                    uint8_t* targetData = targetChunk->data.data() + targetEntityIndex * compSize;
-                                    std::memcpy(targetData, sourceData, compSize);
-                                }
-                            }
-                            
-                            // Update entity reference in ECS
-                            size_t entityId = entityIds[lastChunkIndex * maxEntitiesPerChunk + lastEntityIndex];
-                            for (auto& entity : ecs->entities) {
-                                if (entity.id == entityId) {
-                                    entity.chunkIndex = i;
-                                    entity.entityIndex = targetEntityIndex;
-                                    break;
-                                }
-                            }
-                            
-                            // Update chunk counts
-                            targetChunk->entityCount++;
-                            targetChunk->usedSize += ComponentRegistry::getInstance().getTotalComponentSize(signature);
-                            lastChunk->entityCount--;
-                            lastChunk->usedSize -= ComponentRegistry::getInstance().getTotalComponentSize(signature);
-                            
-                            moved = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!moved) break;  // No more space in previous chunks
-                }
-                
-                // Remove the last chunk if it's empty
-                if (lastChunk->entityCount == 0) {
-                    chunks.pop_back();
-                }
-            }
-            
-            // Create a new chunk if all existing chunks are full
-            if (chunks.empty() || !chunks.back()->hasSpace()) {
-                chunks.push_back(std::make_unique<Chunk>(this));
-            }
-            
+        // First check if the last chunk has space
+        if (!chunks.empty() && chunks.back()->hasSpace()) {
             return chunks.back().get();
         }
+
+        // If we have more than one chunk and the last one isn't full,
+        // redistribute entities to fill gaps in previous chunks
+        if (chunks.size() > 1 && !chunks.back()->hasSpace()) {
+            size_t lastChunkIndex = chunks.size() - 1;
+            Chunk* lastChunk = chunks[lastChunkIndex].get();
+            
+            // Move entities from the last chunk to fill gaps in previous chunks
+            while (lastChunk->getEntityCount() > 0) {
+                bool moved = false;
+                for (size_t i = 0; i < lastChunkIndex; ++i) {
+                    Chunk* targetChunk = chunks[i].get();
+                    if (targetChunk->hasSpace()) {
+                        // Calculate indices
+                        size_t lastEntityIndex = lastChunk->getEntityCount() - 1;
+                        size_t targetEntityIndex = targetChunk->getEntityCount();
+                        
+                        // Get the entity ID being moved
+                        size_t movedEntityId = entityIds[entityCount - 1];
+                        
+                        // Move component data
+                        for (size_t compIndex = 0; compIndex < MAX_COMPONENTS; ++compIndex) {
+                            if (signature.test(compIndex)) {
+                                size_t compSize = ComponentRegistry::getInstance().getComponentSize(compIndex);
+                                targetChunk->copyComponentDataFromChunk(
+                                    lastChunk,
+                                    lastEntityIndex,
+                                    targetEntityIndex,
+                                    compSize
+                                );
+                            }
+                        }
+                        
+                        // Update entity reference in ECS
+                        ecs->updateEntityReference(movedEntityId, this, i, targetEntityIndex);
+                        
+                        // Update chunk counts
+                        targetChunk->incrementEntityCount();
+                        targetChunk->setUsedSize(targetChunk->getEntityCount() * 
+                            ComponentRegistry::getInstance().getTotalComponentSize(signature));
+                        lastChunk->decrementEntityCount();
+                        lastChunk->setUsedSize(lastChunk->getEntityCount() * 
+                            ComponentRegistry::getInstance().getTotalComponentSize(signature));
+                        
+                        moved = true;
+                        break;
+                    }
+                }
+                
+                if (!moved) break;  // No more space in previous chunks
+            }
+            
+            // Remove the last chunk if it's empty
+            if (lastChunk->getEntityCount() == 0) {
+                chunks.pop_back();
+            }
+        }
+        
+        // Create a new chunk if all existing chunks are full
+        if (chunks.empty() || !chunks.back()->hasSpace()) {
+            chunks.push_back(std::make_unique<Chunk>(this));
+        }
+        
+        return chunks.back().get();
+    }
 } // namespace ecs

@@ -13,7 +13,7 @@ void testComponentNames(::ecs::Ecs& ecs) {
     );
 
     // Get the archetype signature
-    auto& signature = entity.archetype->signature;
+    auto& signature = entity.getArchetype()->getSignature();
 
     // Print component names
     std::cout << "Entity components:\n";
