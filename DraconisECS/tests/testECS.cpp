@@ -61,7 +61,7 @@ void createPerformanceTestEntities(::ecs::Ecs& ecs) {
 }
 
 void testRandomEntityOperations(::ecs::Ecs& ecs) {
-    if (ecs.entities.empty()) {
+    if (ecs.getEntities().empty()) {
         // If no entities exist, create some test entities first
         createComplexEntities(ecs);
     }
@@ -72,18 +72,18 @@ void testRandomEntityOperations(::ecs::Ecs& ecs) {
     std::uniform_real_distribution<float> opDist(0.0f, 1.0f);
 
     // Perform random operations on 10% of entities
-    size_t numOperations = ecs.entities.size() / 10;
-    std::vector<size_t> entityIndices(ecs.entities.size());
+    size_t numOperations = ecs.getEntities().size() / 10;
+    std::vector<size_t> entityIndices(ecs.getEntities().size());
     std::iota(entityIndices.begin(), entityIndices.end(), 0);
     std::shuffle(entityIndices.begin(), entityIndices.end(), gen);
 
     for (size_t i = 0; i < numOperations && i < entityIndices.size(); ++i) {
         size_t entityIndex = entityIndices[i];
-        if (entityIndex >= ecs.entities.size()) {
+        if (entityIndex >= ecs.getEntities().size()) {
             continue;  // Skip invalid indices
         }
 
-        auto& entity = ecs.entities[entityIndex];
+        auto& entity = ecs.getEntities()[entityIndex];
         float operation = opDist(gen);
 
         if (operation < 0.3f) {
@@ -98,27 +98,27 @@ void testRandomEntityOperations(::ecs::Ecs& ecs) {
             // 30% chance to add a random component
             switch (std::uniform_int_distribution<>(0, 4)(gen)) {
                 case 0:
-                    if (!entity.archetype->signature[::ecs::typeId<Health>]) {
+                    if (!entity.getArchetype()->getSignature()[::ecs::typeId<Health>]) {
                         ecs.addComponent(entity, Health{100, 100, false});
                     }
                     break;
                 case 1:
-                    if (!entity.archetype->signature[::ecs::typeId<AI>]) {
+                    if (!entity.getArchetype()->getSignature()[::ecs::typeId<AI>]) {
                         ecs.addComponent(entity, AI{"random", 10.0f, false});
                     }
                     break;
                 case 2:
-                    if (!entity.archetype->signature[::ecs::typeId<Physics>]) {
+                    if (!entity.getArchetype()->getSignature()[::ecs::typeId<Physics>]) {
                         ecs.addComponent(entity, Physics{0.0f, 0.0f, 1.0f, false});
                     }
                     break;
                 case 3:
-                    if (!entity.archetype->signature[::ecs::typeId<Sprite>]) {
+                    if (!entity.getArchetype()->getSignature()[::ecs::typeId<Sprite>]) {
                         ecs.addComponent(entity, Sprite{"random.png"});
                     }
                     break;
                 case 4:
-                    if (!entity.archetype->signature[::ecs::typeId<Transform>]) {
+                    if (!entity.getArchetype()->getSignature()[::ecs::typeId<Transform>]) {
                         ecs.addComponent(entity, Transform{0.0f, 0.0f, 0.0f, 0.0f});
                     }
                     break;
@@ -127,7 +127,7 @@ void testRandomEntityOperations(::ecs::Ecs& ecs) {
             // 40% chance to remove a random component
             std::vector<size_t> componentIndices;
             for (size_t j = 0; j < ::ecs::MAX_COMPONENTS; ++j) {
-                if (entity.archetype->signature[j]) {
+                if (entity.getArchetype()->getSignature()[j]) {
                     componentIndices.push_back(j);
                 }
             }
