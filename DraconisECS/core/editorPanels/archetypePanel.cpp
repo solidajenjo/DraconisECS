@@ -16,94 +16,147 @@ void ArchetypePanel::render() {
     // Get reference to ECS system
     auto& ecs = app::appInstance.getEcs();
 
+    // Add helper function to get archetype name
+    auto getArchetypeName = [](const std::bitset<::ecs::MAX_COMPONENTS>& signature) -> std::string {
+        std::vector<std::string> components;
+        for (size_t i = 0; i < ::ecs::MAX_COMPONENTS; ++i) {
+            if (signature.test(i)) {
+                components.push_back(::ecs::ComponentRegistry::getInstance().getComponentName(i));
+            }
+        }
+        if (components.empty()) return "Empty";
+        std::string name = components[0];
+        for (size_t i = 1; i < components.size(); ++i) {
+            name += " + " + components[i];
+        }
+        return name;
+    };
+
     // Add test buttons at the top
     if (ImGui::CollapsingHeader("Test Controls")) {
         if (ImGui::Button("Create Basic Test Entities")) {
-            test::createTestEntities(ecs);
+            test::ecs::createTestEntities(ecs);
         }
         if (ImGui::Button("Create Complex Entities")) {
-            test::createComplexEntities(ecs);
+            test::ecs::createComplexEntities(ecs);
         }
         if (ImGui::Button("Create Performance Test Entities")) {
-            test::createPerformanceTestEntities(ecs);
+            test::ecs::createPerformanceTestEntities(ecs);
+        }
+        if (ImGui::Button("Test Random Entity Operations")) {
+            test::ecs::testRandomEntityOperations(ecs);
+        }
+        if (ImGui::Button("Test Component Names")) {
+            test::ecs::testComponentNames(ecs);
         }
         ImGui::Separator();
     }
 
     // Display total entity count
     ImGui::Text("Total Entities: %zu", ecs.entities.size());
+    ImGui::Separator();
 
-    // Display archetypes
-    for (const auto& [signature, archetype] : ecs.archetypes) {
-        // Push unique ID for this archetype
-        ImGui::PushID(static_cast<int>(reinterpret_cast<uintptr_t>(archetype.get())));
-        
-        if (ImGui::CollapsingHeader(("Archetype " + std::to_string(reinterpret_cast<uintptr_t>(archetype.get()))).c_str())) {
-            // Display entity count
-            ImGui::Text("Entities: %zu", archetype->entityCount);
+    // Display archetypes in a table
+    if (ImGui::BeginTable("Archetypes", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        ImGui::TableSetupColumn("Archetype");
+        ImGui::TableSetupColumn("Entity Count");
+        ImGui::TableSetupColumn("Memory Usage");
+        ImGui::TableSetupColumn("Chunks");
+        ImGui::TableHeadersRow();
 
-            // Display chunks
-            if (ImGui::TreeNode("Chunks")) {
+        for (const auto& [signature, archetype] : ecs.archetypes) {
+            ImGui::TableNextRow();
+            
+            // Archetype name column
+            ImGui::TableNextColumn();
+            std::string archetypeName = getArchetypeName(signature);
+            ImGui::Text("%s", archetypeName.c_str());
+
+            // Entity count column
+            ImGui::TableNextColumn();
+            ImGui::Text("%zu", archetype->entityCount);
+
+            // Memory usage column
+            ImGui::TableNextColumn();
+            size_t totalSize = 0;
+            for (size_t i = 0; i < ::ecs::MAX_COMPONENTS; ++i) {
+                if (signature.test(i)) {
+                    totalSize += ::ecs::ComponentRegistry::getInstance().getComponentSize(i);
+                }
+            }
+            size_t totalMemory = totalSize * archetype->entityCount;
+            ImGui::Text("%zu bytes", totalMemory);
+
+            // Chunks column
+            ImGui::TableNextColumn();
+            if (ImGui::BeginTable(("Chunks_" + archetypeName).c_str(), 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+                ImGui::TableSetupColumn("Index");
+                ImGui::TableSetupColumn("Usage");
+                ImGui::TableSetupColumn("Memory");
+                ImGui::TableHeadersRow();
+
                 for (size_t i = 0; i < archetype->chunks.size(); ++i) {
                     const auto& chunk = archetype->chunks[i];
-                    // Push unique ID for this chunk
-                    ImGui::PushID(static_cast<int>(i));
+                    ImGui::TableNextRow();
                     
-                    if (ImGui::TreeNode(("Chunk " + std::to_string(i)).c_str())) {
-                        // Display chunk usage
-                        ImGui::Text("Used Size: %zu/%d", chunk->usedSize, ecs::CHUNK_SIZE);
-                        
-                        // Display memory layout
-                        if (ImGui::TreeNode("Memory Layout")) {
-                            size_t totalSize = 0;
-                            for (size_t compIdx = 0; compIdx < ecs::MAX_COMPONENTS; ++compIdx) {
-                                if (signature[compIdx]) {
-                                    // Get component size (this is a simplified version)
-                                    size_t compSize = sizeof(void*); // We'll need to implement proper component size tracking
-                                    totalSize += compSize;
-                                    ImGui::Text("Component %zu: %zu bytes", compIdx, compSize);
-                                }
-                            }
-                            ImGui::Text("Total Size: %zu bytes", totalSize);
-                            ImGui::TreePop();
-                        }
+                    // Chunk index
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%zu", i);
 
-                        // Display entities in chunk
-                        if (ImGui::TreeNode("Entities")) {
-                            for (size_t j = 0; j < chunk->usedSize; ++j) {
-                                // Push unique ID for each entity
-                                ImGui::PushID(static_cast<int>(j));
-                                ImGui::Text("Entity %zu", archetype->entityIds[j]);
-                                ImGui::PopID();
-                            }
-                            ImGui::TreePop();
-                        }
+                    // Usage
+                    ImGui::TableNextColumn();
+                    float entityRatio = static_cast<float>(chunk->entityCount) / chunk->getMaxEntities();
+                    ImGui::ProgressBar(entityRatio, ImVec2(-1, 0), "");
+                    ImGui::SameLine();
+                    ImGui::Text("%zu/%zu", chunk->entityCount, chunk->getMaxEntities());
 
-                        ImGui::TreePop();
-                    }
-                    
-                    ImGui::PopID(); // Pop chunk ID
+                    // Memory
+                    ImGui::TableNextColumn();
+                    float memoryRatio = static_cast<float>(chunk->usedSize) / (chunk->getMaxEntities() * totalSize);
+                    ImGui::ProgressBar(memoryRatio, ImVec2(-1, 0), "");
+                    ImGui::SameLine();
+                    ImGui::Text("%zu/%zu", chunk->usedSize, chunk->getMaxEntities() * totalSize);
                 }
-                ImGui::TreePop();
-            }
-
-            // Display memory statistics
-            if (ImGui::TreeNode("Memory Statistics")) {
-                size_t totalMemory = 0;
-                for (size_t i = 0; i < ecs::MAX_COMPONENTS; ++i) {
-                    if (signature[i]) {
-                        size_t compSize = sizeof(void*); // Simplified
-                        totalMemory += compSize * archetype->entityCount;
-                    }
-                }
-                ImGui::Text("Total Memory Used: %zu bytes", totalMemory);
-                ImGui::Text("Average Memory per Entity: %.2f bytes", 
-                          archetype->entityCount > 0 ? static_cast<float>(totalMemory) / archetype->entityCount : 0.0f);
-                ImGui::TreePop();
+                ImGui::EndTable();
             }
         }
-        
-        ImGui::PopID(); // Pop archetype ID
+        ImGui::EndTable();
+    }
+
+    // Display component details in a separate table
+    ImGui::Separator();
+    ImGui::Text("Component Details");
+    if (ImGui::BeginTable("Components", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        ImGui::TableSetupColumn("Component");
+        ImGui::TableSetupColumn("Size");
+        ImGui::TableSetupColumn("Count");
+        ImGui::TableHeadersRow();
+
+        std::unordered_map<size_t, size_t> componentCounts;
+        for (const auto& [signature, archetype] : ecs.archetypes) {
+            for (size_t i = 0; i < ::ecs::MAX_COMPONENTS; ++i) {
+                if (signature.test(i)) {
+                    componentCounts[i] += archetype->entityCount;
+                }
+            }
+        }
+
+        for (const auto& [typeId, count] : componentCounts) {
+            ImGui::TableNextRow();
+            
+            // Component name
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", ::ecs::ComponentRegistry::getInstance().getComponentName(typeId));
+
+            // Component size
+            ImGui::TableNextColumn();
+            ImGui::Text("%zu bytes", ::ecs::ComponentRegistry::getInstance().getComponentSize(typeId));
+
+            // Component count
+            ImGui::TableNextColumn();
+            ImGui::Text("%zu", count);
+        }
+        ImGui::EndTable();
     }
 
     ImGui::End();
