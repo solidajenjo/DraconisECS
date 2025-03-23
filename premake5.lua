@@ -23,9 +23,6 @@ project "DraconisECS"
     targetdir ("%{wks.location}/bin/%{cfg.buildcfg}/%{prj.name}")
     objdir ("%{wks.location}/bin-int/%{cfg.buildcfg}/%{prj.name}")
 
-    pchheader "pch.h"
-    pchsource "DraconisECS/pch.cpp"
-
     files
     {
         "DraconisECS/**.h",
