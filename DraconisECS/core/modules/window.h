@@ -7,21 +7,21 @@ typedef void* SDL_GLContext;
 
 namespace module
 {
-	class Window : public module::Module
-    {
-    public:
- 
-		bool init() override;
+class Window : public module::Module
+{
+public:
+	bool init() override;
+	bool postUpdate() override;
+	bool shutdown() override;
 
-        bool postUpdate() override;
+	SDL_Window* getWindow() const
+	{
+		return window;
+	}
 
-		bool shutdown() override;
-
-		SDL_Window* getWindow() const { return window; }
-        
-    private:
-        SDL_Window* window = nullptr;
-        SDL_Renderer* renderer = nullptr;
-        SDL_GLContext glContext = nullptr;
-    };
-} // namespace window
+private:
+	SDL_Window* window		= nullptr;
+	SDL_Renderer* renderer	= nullptr;
+	SDL_GLContext glContext = nullptr;
+};
+}  // namespace module

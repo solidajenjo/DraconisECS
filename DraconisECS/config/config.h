@@ -5,58 +5,59 @@ namespace core
 {
 struct WindowConfig
 {
-    std::string title = "DraconisECS";
-    int width = 1280;
-    int height = 720;
-    bool fullscreen = false;
-    bool vsync = true;
+	std::string title = "DraconisECS";
+	int width		  = 1280;
+	int height		  = 720;
+	bool fullscreen	  = false;
+	bool vsync		  = true;
 };
 
 struct GraphicsConfig
 {
-    int glMajorVersion = 3;
-    int glMinorVersion = 0;
-    int msaaSamples = 4;
+	int glMajorVersion = 3;
+	int glMinorVersion = 0;
+	int msaaSamples	   = 4;
 };
 
 class Config
 {
-  public:
-    static Config &get()
-    {
-        static Config instance;
-        return instance;
-    }
+public:
+	static Config& get()
+	{
+		static Config instance;
+		return instance;
+	}
 
-    bool loadFromFile(const std::string &filename);
-    bool saveToFile(const std::string &filename) const;
+	bool loadFromFile( const std::string& filename );
+	bool saveToFile( const std::string& filename ) const;
+	bool save() const;
 
-    // Configuration getters
-    const WindowConfig &getWindowConfig() const
-    {
-        return windowConfig;
-    }
-    const GraphicsConfig &getGraphicsConfig() const
-    {
-        return graphicsConfig;
-    }
+	WindowConfig& getWindowConfig()
+	{
+		return m_WindowConfig;
+	}
+	GraphicsConfig& getGraphicsConfig()
+	{
+		return m_GraphicsConfig;
+	}
 
-    // Configuration setters
-    void setWindowConfig(const WindowConfig &config)
-    {
-        windowConfig = config;
-    }
-    void setGraphicsConfig(const GraphicsConfig &config)
-    {
-        graphicsConfig = config;
-    }
+	void setWindowConfig( const WindowConfig& config )
+	{
+		m_WindowConfig = config;
+	}
 
-  private:
-    Config() = default; // Private constructor for singleton
-    Config(const Config &) = delete;
-    Config &operator=(const Config &) = delete;
+	void setGraphicsConfig( const GraphicsConfig& config )
+	{
+		m_GraphicsConfig = config;
+	}
 
-    WindowConfig windowConfig;
-    GraphicsConfig graphicsConfig;
+private:
+	Config()						   = default;
+	~Config()						   = default;
+	Config( const Config& )			   = delete;
+	Config& operator=( const Config& ) = delete;
+
+	WindowConfig m_WindowConfig;
+	GraphicsConfig m_GraphicsConfig;
 };
-} // namespace core 
+}  // namespace core

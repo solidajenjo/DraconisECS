@@ -3,9 +3,9 @@
 
 namespace module
 {
-	class Input : public module::Module
-	{
-	public:
-		bool update() override;
-	};
-} // namespace input
+class Input : public module::Module
+{
+public:
+	bool update() override;
+};
+}  // namespace module

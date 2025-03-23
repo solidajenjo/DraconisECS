@@ -1,79 +1,66 @@
 #include "chunk.h"
-#include "ecs.h"
 #include <cstring>
+#include "ecs.h"
 
-namespace ecs {
-
-Chunk::Chunk(Archetype& arch) : archetype(arch) {
-    data.resize(CHUNK_SIZE);
+namespace ecs
+{
+/*
+Chunk::Chunk( Archetype& arch ) : archetype( arch )
+{
+data.resize( CHUNK_SIZE );
 }
+*/
 
 Chunk::~Chunk() = default;
 
-bool Chunk::hasSpace() const {
-    return entityCount < getMaxEntities();
+bool Chunk::hasSpace() const
+{
+	return entityCount < getMaxEntities();
+}
+/*
+size_t Chunk::getMaxEntities() const
+{
+	assert( archetype.getSignature().any() );
+	return CHUNK_SIZE / ComponentRegistry::getInstance().getTotalComponentSize( archetype.getSignature() );
 }
 
-size_t Chunk::getMaxEntities() const {
-    return CHUNK_SIZE / ComponentRegistry::getInstance().getTotalComponentSize(archetype.getSignature());
+Archetype& Chunk::getArchetype() const
+{
+	return archetype;
+}
+*/
+
+size_t Chunk::getUsedSize() const
+{
+	return usedSize;
 }
 
-Archetype& Chunk::getArchetype() const { 
-    return archetype; 
+size_t Chunk::getEntityCount() const
+{
+	return entityCount;
 }
 
-size_t Chunk::getUsedSize() const { 
-    return usedSize; 
+std::vector<uint8_t>& Chunk::getData()
+{
+	return data;
 }
 
-size_t Chunk::getEntityCount() const { 
-    return entityCount; 
+void Chunk::setUsedSize( size_t size )
+{
+	usedSize = size;
 }
 
-template<typename T>
-T& Chunk::getComponent(size_t index) {
-    return *reinterpret_cast<T*>(data.data() + index * sizeof(T));
+void Chunk::setEntityCount( size_t count )
+{
+	entityCount = count;
 }
 
-template<typename T>
-const T& Chunk::getComponent(size_t index) const {
-    return *reinterpret_cast<const T*>(data.data() + index * sizeof(T));
+size_t Chunk::getMaxEntities() const
+{
+	/*
+	assert( archetype.getSignature().any() );
+	return CHUNK_SIZE / ComponentRegistry::getInstance().getTotalComponentSize( archetype.getSignature() );
+	*/
+	return 0;
 }
-
-void Chunk::copyComponentData(size_t sourceIndex, size_t targetIndex, size_t componentSize) {
-    std::memcpy(
-        data.data() + targetIndex * componentSize,
-        data.data() + sourceIndex * componentSize,
-        componentSize
-    );
-}
-
-void Chunk::copyComponentDataFromChunk(const Chunk& sourceChunk, size_t sourceIndex, size_t targetIndex, size_t componentSize) {
-    std::memcpy(
-        data.data() + targetIndex * componentSize,
-        sourceChunk.getData().data() + sourceIndex * componentSize,
-        componentSize
-    );
-}
-
-const std::vector<uint8_t>& Chunk::getData() const { 
-    return data; 
-}
-
-void Chunk::setUsedSize(size_t size) { 
-    usedSize = size; 
-}
-
-void Chunk::setEntityCount(size_t count) { 
-    entityCount = count; 
-}
-
-void Chunk::incrementEntityCount() { 
-    entityCount++; 
-}
-
-void Chunk::decrementEntityCount() { 
-    entityCount--; 
-}
-
-} // namespace ecs 
+}  // namespace ecs

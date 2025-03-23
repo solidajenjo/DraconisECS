@@ -1,54 +1,61 @@
 #pragma once
-#include <vector>
+#include <bitset>
 #include <cstdint>
 #include <memory>
-#include <bitset>
+#include <vector>
 #include "componentRegistry.h"
 
-namespace ecs {
+namespace ecs
+{
+// class Archetype;
 
-    // Forward declarations
-    class Archetype;
+// Chunk represents a fixed-size block of memory for component data
+class Chunk
+{
+public:
+	// Chunk( Archetype& arch );
+	~Chunk();
 
-    // Chunk represents a fixed-size block of memory for component data
-    class Chunk {
-    public:
-        Chunk(Archetype& arch);
-        ~Chunk();
+	size_t getUsedSize() const;
+	size_t getMaxEntities() const;
+	size_t getEntityCount() const;
 
-        bool hasSpace() const;
-        size_t getMaxEntities() const;
-        Archetype& getArchetype() const;
-        size_t getUsedSize() const;
-        size_t getEntityCount() const;
+private:
+	// Make Archetype and Ecs friends to allow them to access private methods
+	// friend class Archetype;
+	friend class Ecs;
 
-        template<typename T>
-        void createComponent(size_t index, const T& initializer) {
-            size_t offset = index * sizeof(T);
-            new (data.data() + offset) T(initializer);
-        }
+	bool hasSpace() const;
+	// Archetype& getArchetype() const;
 
-    private:
-        Archetype& archetype;
-        std::vector<uint8_t> data;  // Fixed-size chunk data
-        size_t usedSize = 0;
-        size_t entityCount = 0;
+	template <typename T>
+	void createComponent( size_t index, const T& initializer )
+	{
+		size_t offset = index * sizeof( T );
+		new( data.data() + offset ) T( initializer );
+	}
 
-        // Make Archetype and Ecs friends to allow them to access private methods
-        friend class Archetype;
-        friend class Ecs;
+	template <typename T>
+	T& getComponent( size_t index )
+	{
+		size_t offset = index * sizeof( T );
+		return *reinterpret_cast<T*>( data.data() + offset );
+	}
 
-        template<typename T>
-        T& getComponent(size_t index);
-        template<typename T>
-        const T& getComponent(size_t index) const;
+	template <typename T>
+	const T& getComponent( size_t index ) const
+	{
+		size_t offset = index * sizeof( T );
+		return *reinterpret_cast<const T*>( data.data() + offset );
+	}
 
-        void copyComponentData(size_t sourceIndex, size_t targetIndex, size_t componentSize);
-        void copyComponentDataFromChunk(const Chunk& sourceChunk, size_t sourceIndex, size_t targetIndex, size_t componentSize);
-        const std::vector<uint8_t>& getData() const;
-        void setUsedSize(size_t size);
-        void setEntityCount(size_t count);
-        void incrementEntityCount();
-        void decrementEntityCount();
-    };
-} 
+	// Archetype& archetype;
+	std::vector<uint8_t> data;	// Fixed-size chunk data
+	size_t usedSize	   = 0;
+	size_t entityCount = 0;
+
+	std::vector<uint8_t>& getData();
+	void setUsedSize( size_t size );
+	void setEntityCount( size_t count );
+};
+}  // namespace ecs

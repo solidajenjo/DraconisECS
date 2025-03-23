@@ -6,16 +6,16 @@ namespace module::editor
 {
 class ConfigPanel : public EditorPanel
 {
-  public:
-    void render() override;
-    const char *getName() const override
-    {
-        return "Configuration";
-    }
+public:
+	void render() override;
+	const char* getName() const override
+	{
+		return "Configuration";
+	}
 
-  private:
-    void renderWindowConfig();
-    void renderGraphicsConfig();
-    bool isDirty = false;
+private:
+	void renderWindowConfig();
+	void renderGraphicsConfig();
+	bool isDirty = false;
 };
-} // namespace module::editor
+}  // namespace module::editor

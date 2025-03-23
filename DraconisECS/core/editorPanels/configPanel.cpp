@@ -1,149 +1,108 @@
 #include "configPanel.h"
 #include <SDL.h>
-#include <filesystem>
 #include <imgui.h>
+#include <filesystem>
 #include <iostream>
 
 namespace module::editor
 {
 void ConfigPanel::render()
 {
-    if (ImGui::Begin("Configuration"))
-    {
-        auto &config = core::Config::get();
-        bool needsSave = false;
+	if( ImGui::Begin( "Configuration" ) )
+	{
+		auto& config   = core::Config::get();
+		bool needsSave = false;
 
-        if (ImGui::CollapsingHeader("Window", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            renderWindowConfig();
-            if (isDirty)
-                needsSave = true;
-        }
+		if( ImGui::CollapsingHeader( "Window", ImGuiTreeNodeFlags_DefaultOpen ) )
+		{
+			renderWindowConfig();
+			if( isDirty )
+				needsSave = true;
+		}
 
-        if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            renderGraphicsConfig();
-            if (isDirty)
-                needsSave = true;
-        }
+		if( ImGui::CollapsingHeader( "Graphics", ImGuiTreeNodeFlags_DefaultOpen ) )
+		{
+			renderGraphicsConfig();
+			if( isDirty )
+				needsSave = true;
+		}
 
-        if (needsSave)
-        {
-            if (ImGui::Button("Save Changes"))
-            {
-                // Get the executable path
-                char *basePath = SDL_GetBasePath();
-                if (!basePath)
-                {
-                    std::cerr << "Failed to get base path: " << SDL_GetError() << std::endl;
-                    return;
-                }
-
-                std::filesystem::path configPath = std::filesystem::path(basePath) / "config.json";
-                SDL_free(basePath);
-
-                if (config.saveToFile(configPath.string()))
-                {
-                    isDirty = false;
-                }
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Revert Changes"))
-            {
-                char *basePath = SDL_GetBasePath();
-                if (!basePath)
-                {
-                    std::cerr << "Failed to get base path: " << SDL_GetError() << std::endl;
-                    return;
-                }
-
-                std::filesystem::path configPath = std::filesystem::path(basePath) / "config.json";
-                SDL_free(basePath);
-
-                if (config.loadFromFile(configPath.string()))
-                {
-                    isDirty = false;
-                }
-            }
-        }
-    }
-    ImGui::End();
+		if( needsSave )
+		{
+			ImGui::Separator();
+			if( ImGui::Button( "Save Changes" ) )
+			{
+				config.save();
+				isDirty = false;
+			}
+		}
+	}
+	ImGui::End();
 }
 
 void ConfigPanel::renderWindowConfig()
 {
-    auto &config = core::Config::get();
-    auto windowConfig = config.getWindowConfig();
-    bool changed = false;
+	auto& config	   = core::Config::get();
+	auto& windowConfig = config.getWindowConfig();
 
-    // Title
-    char title[256];
-    strcpy_s(title, windowConfig.title.c_str());
-    if (ImGui::InputText("Window Title", title, sizeof(title)))
-    {
-        windowConfig.title = title;
-        changed = true;
-    }
+	int width		= windowConfig.width;
+	int height		= windowConfig.height;
+	bool fullscreen = windowConfig.fullscreen;
 
-    // Dimensions
-    int dimensions[2] = {windowConfig.width, windowConfig.height};
-    if (ImGui::InputInt2("Window Size", dimensions))
-    {
-        windowConfig.width = dimensions[0];
-        windowConfig.height = dimensions[1];
-        changed = true;
-    }
+	if( ImGui::InputInt( "Width", &width ) )
+	{
+		windowConfig.width = width;
+		isDirty			   = true;
+	}
 
-    // Fullscreen
-    bool fullscreen = windowConfig.fullscreen;
-    if (ImGui::Checkbox("Fullscreen", &fullscreen))
-    {
-        windowConfig.fullscreen = fullscreen;
-        changed = true;
-    }
+	if( ImGui::InputInt( "Height", &height ) )
+	{
+		windowConfig.height = height;
+		isDirty				= true;
+	}
 
-    // VSync
-    bool vsync = windowConfig.vsync;
-    if (ImGui::Checkbox("VSync", &vsync))
-    {
-        windowConfig.vsync = vsync;
-        changed = true;
-    }
-
-    if (changed)
-    {
-        config.setWindowConfig(windowConfig);
-        isDirty = true;
-    }
+	if( ImGui::Checkbox( "Fullscreen", &fullscreen ) )
+	{
+		windowConfig.fullscreen = fullscreen;
+		isDirty					= true;
+	}
 }
 
 void ConfigPanel::renderGraphicsConfig()
 {
-    auto &config = core::Config::get();
-    auto graphicsConfig = config.getGraphicsConfig();
-    bool changed = false;
+	auto& config = core::Config::get();
 
-    // OpenGL Version
-    int version[2] = {graphicsConfig.glMajorVersion, graphicsConfig.glMinorVersion};
-    if (ImGui::InputInt2("OpenGL Version", version))
-    {
-        graphicsConfig.glMajorVersion = version[0];
-        graphicsConfig.glMinorVersion = version[1];
-        changed = true;
-    }
+	// Graphics settings
+	if( ImGui::CollapsingHeader( "Graphics", ImGuiTreeNodeFlags_DefaultOpen ) )
+	{
+		ImGui::Indent( 10 );
+		ImGui::Unindent( 10 );
 
-    // MSAA Samples
-    int samples = graphicsConfig.msaaSamples;
-    if (ImGui::InputInt("MSAA Samples", &samples))
-    {
-        graphicsConfig.msaaSamples = samples;
-        changed = true;
-    }
+		// OpenGL version
+		int glMajor = config.getGraphicsConfig().glMajorVersion;
+		int glMinor = config.getGraphicsConfig().glMinorVersion;
+		if( ImGui::DragInt2( "OpenGL Version", &glMajor, 1, 1, 4, "%d" ) )
+		{
+			config.getGraphicsConfig().glMajorVersion = glMajor;
+			config.getGraphicsConfig().glMinorVersion = glMinor;
+			config.save();
+		}
 
-    if (changed)
-    {
-        config.setGraphicsConfig(graphicsConfig);
-        isDirty = true;
-    }
+		// MSAA samples
+		int msaaSamples = config.getGraphicsConfig().msaaSamples;
+		if( ImGui::DragInt( "MSAA Samples", &msaaSamples, 1, 0, 16, "%d" ) )
+		{
+			config.getGraphicsConfig().msaaSamples = msaaSamples;
+			config.save();
+		}
+
+		// VSync
+		bool vsync = config.getWindowConfig().vsync;
+		if( ImGui::Checkbox( "VSync", &vsync ) )
+		{
+			config.getWindowConfig().vsync = vsync;
+			config.save();
+		}
+	}
 }
-} // namespace module::editor
+}  // namespace module::editor
