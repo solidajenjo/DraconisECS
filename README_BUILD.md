@@ -4,7 +4,8 @@
 
 ### Required Software
 - Visual Studio 2022 with C++ Desktop Development workload
-- CMake 3.15 or higher
+- CMake 3.15 or higher (for CMake builds)
+- Premake5 (for Visual Studio solution generation)
 - Git (for cloning the repository)
 - Ninja build system (included with Visual Studio 2022)
 
@@ -17,7 +18,28 @@ The following dependencies are included in the repository under the `ThirdParty`
 
 ## Building the Project
 
-The project uses the Ninja build system for faster builds and better reliability. Ninja is included with Visual Studio 2022's CMake tools.
+### Using Premake5 (Recommended for Visual Studio Users)
+
+1. Install Premake5:
+   - Download from https://premake.github.io/download/
+   - Add Premake5 to your system PATH
+
+2. Generate Visual Studio Solution:
+   ```bash
+   premake5 vs2022
+   ```
+
+3. Open the generated solution:
+   - Navigate to the `.vs` directory
+   - Open `DraconisECS.sln`
+   - Select your desired configuration (Debug, Release, or Dist)
+   - Build the solution
+
+The executable and required DLLs will be placed in the `bin/[Configuration]/DraconisECS` directory.
+
+### Using CMake (Alternative Method)
+
+The project also supports building with CMake using the Ninja build system for faster builds and better reliability. Ninja is included with Visual Studio 2022's CMake tools.
 
 Build scripts are located in the `scripts` directory. Run the build script from any location:
 ```bash
@@ -51,16 +73,24 @@ The script will automatically:
 ## Project Structure
 ```
 DraconisECS/
-├── build/              # Build output directory
-│   └── bin/           # Binaries directory
-│       ├── Debug/     # Debug configuration output
-│       └── Release/   # Release configuration output
-├── DraconisECS/       # Source code
-├── scripts/           # Build and run scripts
-├── ThirdParty/        # Third-party dependencies
-├── config.json        # Application configuration
-├── layout.json        # UI layout configuration
-└── imgui.ini          # ImGui configuration
+├── .vs/                # Visual Studio solution files (Premake5)
+├── build/             # CMake build output directory
+│   └── bin/          # Binaries directory
+│       ├── Debug/    # Debug configuration output
+│       └── Release/  # Release configuration output
+├── bin/              # Premake5 build output directory
+│   ├── Debug/       # Debug configuration output
+│   ├── Release/     # Release configuration output
+│   └── Dist/        # Distribution configuration output
+├── bin-int/         # Premake5 intermediate files
+├── DraconisECS/     # Source code
+├── scripts/         # Build and run scripts
+├── ThirdParty/      # Third-party dependencies
+├── config.json      # Application configuration
+├── layout.json      # UI layout configuration
+├── imgui.ini        # ImGui configuration
+├── CMakeLists.txt   # CMake build configuration
+└── premake5.lua     # Premake5 build configuration
 ```
 
 ## Troubleshooting
@@ -88,7 +118,15 @@ DraconisECS/
 
 ### Building from Visual Studio
 
-If you prefer using Visual Studio directly:
+You can build the project in Visual Studio using either method:
+
+#### Using Premake5 (Recommended)
+1. Generate the solution: `premake5 vs2022`
+2. Open `DraconisECS.sln` from the `.vs` directory
+3. Select your desired configuration (Debug, Release, or Dist)
+4. Build -> Build Solution
+
+#### Using CMake
 1. Open Visual Studio 2022
 2. File -> Open -> CMake -> Select the `CMakeLists.txt` in the root directory
 3. Select "x64-Debug" or "x64-Release" configuration
