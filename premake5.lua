@@ -30,7 +30,14 @@ project "DraconisECS"
         "DraconisECS/core/**.h",
         "DraconisECS/core/**.cpp",
         "DraconisECS/modules/**.h",
-        "DraconisECS/modules/**.cpp"
+        "DraconisECS/modules/**.cpp",
+        "ThirdParty/imgui/imgui.cpp",
+        "ThirdParty/imgui/imgui_demo.cpp",
+        "ThirdParty/imgui/imgui_draw.cpp",
+        "ThirdParty/imgui/imgui_tables.cpp",
+        "ThirdParty/imgui/imgui_widgets.cpp",
+        "ThirdParty/imgui/backends/imgui_impl_sdl2.cpp",
+        "ThirdParty/imgui/backends/imgui_impl_opengl3.cpp"
     }
 
     includedirs
@@ -48,7 +55,8 @@ project "DraconisECS"
 
     libdirs
     {
-        "ThirdParty/glew-2.2.0/lib/Release/x64"
+        "ThirdParty/glew-2.2.0/lib/Release/x64",
+        "ThirdParty/SDL2-2.30.8/VisualC/x64/Release"
     }
 
     links
@@ -57,6 +65,12 @@ project "DraconisECS"
         "SDL2main",
         "glew32",
         "opengl32"
+    }
+
+    postbuildcommands
+    {
+        ("{COPY} %{wks.location}/ThirdParty/SDL2-2.30.8/VisualC/x64/Release/SDL2.dll %{cfg.targetdir}"),
+        ("{COPY} %{wks.location}/ThirdParty/glew-2.2.0/bin/Release/x64/glew32.dll %{cfg.targetdir}")
     }
 
     filter "system:windows"

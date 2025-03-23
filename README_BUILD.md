@@ -4,7 +4,7 @@
 
 ### Required Software
 - Visual Studio 2022 with C++ Desktop Development workload
-- CMake 3.15 or higher (for CMake builds)
+- CMake 3.15 or higher (for initial dependency builds)
 - Premake5 (for Visual Studio solution generation)
 - Git (for cloning the repository)
 - Ninja build system (included with Visual Studio 2022)
@@ -18,7 +18,24 @@ The following dependencies are included in the repository under the `ThirdParty`
 
 ## Building the Project
 
-### Using Premake5 (Recommended for Visual Studio Users)
+### Step 1: Build Dependencies with CMake
+
+First, you need to build the dependencies using CMake. This step is required before using Premake5.
+
+```bash
+scripts\build.bat            # Debug build (default)
+scripts\build.bat debug      # Debug build explicitly
+scripts\build.bat release    # Release build
+```
+
+This will:
+1. Build SDL2 from source
+2. Set up all necessary dependencies
+3. Create the required DLLs and libraries
+
+### Step 2: Generate Visual Studio Solution with Premake5
+
+After the dependencies are built, you can generate a Visual Studio solution:
 
 1. Install Premake5:
    - Download from https://premake.github.io/download/
@@ -37,11 +54,10 @@ The following dependencies are included in the repository under the `ThirdParty`
 
 The executable and required DLLs will be placed in the `bin/[Configuration]/DraconisECS` directory.
 
-### Using CMake (Alternative Method)
+### Alternative: Using CMake for Development
 
-The project also supports building with CMake using the Ninja build system for faster builds and better reliability. Ninja is included with Visual Studio 2022's CMake tools.
+If you prefer using CMake directly for development:
 
-Build scripts are located in the `scripts` directory. Run the build script from any location:
 ```bash
 scripts\build.bat            # Debug build (default)
 scripts\build.bat debug      # Debug build explicitly
@@ -121,10 +137,11 @@ DraconisECS/
 You can build the project in Visual Studio using either method:
 
 #### Using Premake5 (Recommended)
-1. Generate the solution: `premake5 vs2022`
-2. Open `DraconisECS.sln` from the `.vs` directory
-3. Select your desired configuration (Debug, Release, or Dist)
-4. Build -> Build Solution
+1. Ensure dependencies are built using CMake first
+2. Generate the solution: `premake5 vs2022`
+3. Open `DraconisECS.sln` from the `.vs` directory
+4. Select your desired configuration (Debug, Release, or Dist)
+5. Build -> Build Solution
 
 #### Using CMake
 1. Open Visual Studio 2022
