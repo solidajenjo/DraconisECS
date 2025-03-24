@@ -13,6 +13,7 @@ struct Velocity
 {
 	float x;
 	float y;
+	float z;
 };
 
 struct Sprite
@@ -41,7 +42,7 @@ int main()
 	auto& ecs	= ecs::Ecs::getInstance();
 	auto entity = ecs.createEntity( Position{ 10, 10 }, Velocity{ 1, 1 } );	
 	std::cout << "Entity created" << std::endl << std::endl;
-	auto entity2 = ecs.createEntity( Position{ 20, 20 }, Velocity{ 2, 2 }, Sprite{} );
+	auto entity2 = ecs.createEntity( Position{ 20, 20 }, Sprite{}, Velocity{ 2, 2 } );
 	std::cout << "Entity2 created" << std::endl << std::endl;
 	auto entity3 = ecs.createEntity( Position{ 30, 30 }, Velocity{ 3, 3 } );
 	std::cout << "Entity3 created" << std::endl << std::endl;

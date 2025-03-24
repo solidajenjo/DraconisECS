@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <bitset>
 #include <cassert>
 #include <cstdint>
@@ -47,7 +48,14 @@ public:
 			// Create new archetype with the component types
 			archetype = archetypes.emplace( signature, std::make_unique<Archetype>( signature ) ).first->second.get();
 			ArchetypeLayout layout;
-			( calculateArchetypeLayout<Components>( layout ), ... );
+			( createArchetypeLayout<Components>( layout ), ... );
+			std::sort( layout.typeOffsets.begin(), layout.typeOffsets.end(), []( const auto& a, const auto& b ) { return a.first < b.first; } );			
+			size_t currentOffset = 0;
+			for( auto& [typeId, typeOffset] : layout.typeOffsets )
+			{
+				typeOffset = currentOffset;
+				currentOffset += ComponentRegistry::getInstance().getComponentSize(typeId);
+			}
 			archetype->setLayout( std::move( layout ) );
 		}
 		else
@@ -60,10 +68,12 @@ public:
 		( archetype->addComponent( entity, std::forward<Components>( components ) ), ... );
 		std::cout << "Archetype layout: " << archetype->getLayout().totalSize << std::endl;
 		//print layout
-		for( const auto& [type, offset] : archetype->getLayout().typeToOffset )
+		for( const auto& [typeId, offset] : archetype->getLayout().typeOffsets )
 		{
-			std::cout << "Component: " << type.name()
-					  << " Offset: " << offset << std::endl;
+			std::cout << "Component: " << ComponentRegistry::getInstance().getComponentName(typeId)
+					  << " Offset: " << offset 
+					  << " Size: " << ComponentRegistry::getInstance().getComponentSize(typeId)
+					  << " TypeId: " << typeId << std::endl;
 		}
 
 		return entity;
@@ -213,12 +223,10 @@ T& getComponent( const Entity& entity )
 
 private:
 	template <typename Component>
-	void calculateArchetypeLayout( ArchetypeLayout& layout )
+	void createArchetypeLayout( ArchetypeLayout& layout )
 	{
-		std::cout << "Calculating archetype layout for component: " << ComponentRegistry::getInstance().getTypeName<Component>() << std::endl;
-		// Add this component's information
-		layout.componentTypes.push_back( typeid( Component ) );
-		layout.typeToOffset[typeid( Component )] = layout.totalSize;
+		std::cout << "Calculating archetype layout for component: " << ComponentRegistry::getInstance().getTypeName<Component>() << std::endl;		
+		layout.typeOffsets.emplace_back( ComponentRegistry::getInstance().getTypeId<Component>(), 0 );
 		layout.totalSize += sizeof( Component );
 	}
 
@@ -226,8 +234,7 @@ private:
 	std::vector<Entity> entities;
 
 	// Make Archetype and Entity friends to allow access to private methods
-	// friend class Archetype;
-	friend class Entity;
+	
 
 	/*
 	// Helper function to initialize a single component with its initializer

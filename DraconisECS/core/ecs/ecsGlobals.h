@@ -2,6 +2,8 @@
 #include <cstddef>
 #include <typeindex>
 #include <vector>
+#include <utility>
+
 
 namespace ecs
 {
@@ -15,8 +17,7 @@ inline const size_t componentSize = sizeof( T );
 
 struct ArchetypeLayout
 {
-	std::vector<std::type_index> componentTypes;
-	std::unordered_map<std::type_index, size_t> typeToOffset;
+	std::vector<std::pair<size_t, size_t>> typeOffsets;  // typeId, offset
 	size_t totalSize = 0;
 };
 
